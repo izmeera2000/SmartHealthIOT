@@ -60,6 +60,7 @@ class DeviceController extends Controller
         $device->readings()->create([
             'heart_rate' => $request->heart_rate,
             'spo2' => $request->spo2,
+            'temp' => $request->temp,
             'lat' => $request->lat,
             'lng' => $request->lng,
         ]);
@@ -79,6 +80,7 @@ class DeviceController extends Controller
         'type' => 'SOS',
         'lat' => $request->lat,
         'lng' => $request->lng,
+        'temp' => $request->temp,
         'data' => json_encode($request->all())
     ]);
 

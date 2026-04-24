@@ -16,6 +16,7 @@ return new class extends Migration
     $table->foreignId('device_id')->constrained()->cascadeOnDelete();
     $table->float('heart_rate')->nullable();
     $table->float('spo2')->nullable();
+    $table->float('temp')->nullable();
     $table->decimal('lat', 10, 7)->nullable();
     $table->decimal('lng', 10, 7)->nullable();
     $table->timestamps();

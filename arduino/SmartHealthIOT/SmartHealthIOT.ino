@@ -1,3 +1,4 @@
+// ================= LIBS =================
 #include <WiFi.h>
 #include <WiFiManager.h>
 #include <HTTPClient.h>
@@ -18,7 +19,6 @@
 
 #define BUZZER_PIN 5
 #define TEMP_PIN 15
-// #define BATTERY_PIN 34
 #define SOS_PIN 4
 
 // ================= OBJECTS =================
@@ -39,7 +39,6 @@ struct SensorData {
   float hr;
   float spo2;
   float temp;
-  // float battery;
   double lat;
   double lon;
 };
@@ -76,11 +75,6 @@ String getUID() {
   return String(id);
 }
 
-// float readBattery() {
-//   int raw = analogRead(BATTERY_PIN);
-//   return (raw / 4095.0) * 2.0 * 3.3;
-// }
-
 void oled(String l1, String l2, String l3) {
   display.clearDisplay();
   display.setCursor(0, 0);
@@ -97,7 +91,7 @@ void beep() {
 }
 
 // =================================================
-// WIFI + SERVER CONFIG
+// WIFI
 // =================================================
 void setupWiFi() {
   WiFiManager wm;
@@ -185,7 +179,6 @@ bool sendDataHTTP(SensorData &d) {
   doc["hr"] = d.hr;
   doc["spo2"] = d.spo2;
   doc["temp"] = d.temp;
-  // doc["battery"] = d.battery;
   doc["lat"] = d.lat;
   doc["lng"] = d.lon;
 
@@ -208,7 +201,6 @@ void sendSOSHTTP(SensorData &d) {
   doc["hr"] = d.hr;
   doc["spo2"] = d.spo2;
   doc["temp"] = d.temp;
-  // doc["battery"] = d.battery;
   doc["lat"] = d.lat;
   doc["lng"] = d.lon;
 
@@ -222,38 +214,62 @@ void sendSOSHTTP(SensorData &d) {
 }
 
 // =================================================
-// SENSOR TASK (CORE 1)
+// MAX30102 TASK (CORE 1 - ISOLATED)
 // =================================================
-void taskSensor(void *pv) {
+void taskMAX(void *pv) {
+
+  const int RATE_SIZE = 8;
+  float rates[RATE_SIZE] = {0};
+  int rateSpot = 0;
+
+  long prevIR = 0;
+  bool rising = false;
+  unsigned long lastBeat = 0;
+  float avgBpm = 0;
+
+  const TickType_t delayMs = pdMS_TO_TICKS(20); // 50Hz
+
   while (true) {
 
-    SensorData d;
-
     long ir = maxSensor.getIR();
-    d.hr = constrain(ir % 120, 60, 100);
-    d.spo2 = 98;
+    float hr = 0;
 
-    tempSensor.requestTemperatures();
-    d.temp = tempSensor.getTempCByIndex(0);
+    if (ir > 50000) {
 
-    // d.battery = readBattery();
+      if (ir > prevIR && !rising) rising = true;
+
+      if (ir < prevIR && rising) {
+        rising = false;
+
+        unsigned long now = millis();
+        float delta = (now - lastBeat) / 1000.0;
+        lastBeat = now;
+
+        if (delta > 0.3 && delta < 2.0) {
+          float bpm = 60.0 / delta;
+
+          if (bpm > 40 && bpm < 180) {
+            rates[rateSpot++] = bpm;
+            rateSpot %= RATE_SIZE;
+
+            float sum = 0;
+            for (int i = 0; i < RATE_SIZE; i++) sum += rates[i];
+            avgBpm = sum / RATE_SIZE;
+          }
+        }
+      }
+
+      prevIR = ir;
+      hr = avgBpm;
+    }
 
     if (xSemaphoreTake(mutex, portMAX_DELAY)) {
-      currentData = d;
+      currentData.hr = hr;
+      currentData.spo2 = (hr > 0) ? 98 : 0;
       xSemaphoreGive(mutex);
     }
 
-    xQueueSend(dataQueue, &d, 0);
-
-    if (
-      d.hr < config.hrLow || d.hr > config.hrHigh ||
-      d.spo2 < config.spo2Low ||
-      d.temp < config.tempLow || d.temp > config.tempHigh
-    ) {
-      xQueueSend(sosQueue, &d, 0);
-    }
-
-    vTaskDelay(1000);
+    vTaskDelay(delayMs);
   }
 }
 
@@ -264,6 +280,8 @@ void taskSystem(void *pv) {
 
   SensorData d;
   bool lastBtn = HIGH;
+  unsigned long lastPairCheck = 0;
+  unsigned long lastTempRead = 0;
 
   pinMode(SOS_PIN, INPUT_PULLUP);
 
@@ -282,35 +300,65 @@ void taskSystem(void *pv) {
       }
     }
 
-    // Button SOS
-    bool btn = digitalRead(SOS_PIN);
-    if (lastBtn == HIGH && btn == LOW) {
+    // TEMP every 2s
+    if (millis() - lastTempRead > 2000) {
+      tempSensor.requestTemperatures();
+      float t = tempSensor.getTempCByIndex(0);
+
       if (xSemaphoreTake(mutex, portMAX_DELAY)) {
-        xQueueSend(sosQueue, &currentData, 0);
+        currentData.temp = t;
         xSemaphoreGive(mutex);
       }
+
+      lastTempRead = millis();
+    }
+
+    // snapshot
+    if (xSemaphoreTake(mutex, portMAX_DELAY)) {
+      d = currentData;
+      xSemaphoreGive(mutex);
+    }
+
+    // send data
+    if (d.hr > 0) {
+      xQueueSend(dataQueue, &d, 0);
+    }
+
+    // SOS button
+    bool btn = digitalRead(SOS_PIN);
+    if (lastBtn == HIGH && btn == LOW) {
+      xQueueSend(sosQueue, &d, 0);
     }
     lastBtn = btn;
 
-    // SEND DATA
+    // abnormal trigger
+    if (
+      d.hr > 0 &&
+      (d.hr < config.hrLow || d.hr > config.hrHigh ||
+       d.spo2 < config.spo2Low ||
+       d.temp < config.tempLow || d.temp > config.tempHigh)
+    ) {
+      xQueueSend(sosQueue, &d, 0);
+    }
+
+    // HTTP send
     if (xQueueReceive(dataQueue, &d, 0)) {
       if (!sendDataHTTP(d)) {
         xQueueSend(retryQueue, &d, 0);
       }
     }
 
-    // RETRY
     if (xQueueReceive(retryQueue, &d, 0)) {
       sendDataHTTP(d);
     }
 
-    // SOS
     if (xQueueReceive(sosQueue, &d, 0)) {
       sendSOSHTTP(d);
     }
 
-    // PAIR CHECK
-    if (!isPaired) {
+    // pairing check
+    if (!isPaired && millis() - lastPairCheck > 5000) {
+      lastPairCheck = millis();
       checkPaired();
     }
 
@@ -318,16 +366,11 @@ void taskSystem(void *pv) {
     if (!isPaired) {
       oled("PAIR DEVICE", pairCode, deviceUID);
     } else {
-      String l1, l2;
-
-      if (xSemaphoreTake(mutex, portMAX_DELAY)) {
-        l1 = "HR:" + String(currentData.hr) + " SPO2:" + String(currentData.spo2);
-        // l2 = "T:" + String(currentData.temp,1) + " B:" + String(currentData.battery,2);
-        l2 = "T:" + String(currentData.temp,1) ;
-        xSemaphoreGive(mutex);
-      }
-
-      oled(l1, l2, "CONNECTED");
+      oled(
+        "HR:" + String(d.hr) + " SPO2:" + String(d.spo2),
+        "T:" + String(d.temp,1),
+        "CONNECTED"
+      );
     }
 
     vTaskDelay(200);
@@ -357,25 +400,17 @@ void setup() {
   }
 
   GPSserial.begin(9600, SERIAL_8N1, 16, 17);
-
   tempSensor.begin();
-
-  analogReadResolution(12);
 
   deviceUID = getUID();
 
-  // Load saved server
   prefs.begin("config", true);
-  String savedServer = prefs.getString("server", "");
+  String saved = prefs.getString("server", "");
   prefs.end();
-
-  if (savedServer.length() > 0) {
-    savedServer.toCharArray(serverUrl, 120);
-  }
+  if (saved.length() > 0) saved.toCharArray(serverUrl, 120);
 
   setupWiFi();
 
-  // Pairing
   prefs.begin("device", true);
   pairCode = prefs.getString("pair", "");
   prefs.end();
@@ -388,13 +423,12 @@ void setup() {
   }
 
   mutex = xSemaphoreCreateMutex();
-
   dataQueue = xQueueCreate(10, sizeof(SensorData));
   sosQueue = xQueueCreate(5, sizeof(SensorData));
   retryQueue = xQueueCreate(10, sizeof(SensorData));
 
-  xTaskCreatePinnedToCore(taskSensor, "SENSOR", 4096, NULL, 2, NULL, 1);
-  xTaskCreatePinnedToCore(taskSystem, "SYSTEM", 8192, NULL, 1, NULL, 0);
+  xTaskCreatePinnedToCore(taskMAX, "MAX", 4096, NULL, 3, NULL, 1);
+  xTaskCreatePinnedToCore(taskSystem, "SYS", 8192, NULL, 1, NULL, 0);
 }
 
 void loop() {}

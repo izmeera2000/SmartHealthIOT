@@ -66,4 +66,22 @@ class DeviceController extends Controller
 
         return response()->json(['ok' => true]);
     }
+
+
+    public function sos(Request $request)
+{
+    $device = Device::where('uid', $request->uid)->first();
+
+    if (!$device) return response()->json(['error' => 'invalid'], 404);
+
+    // store alert
+    $device->alerts()->create([
+        'type' => 'SOS',
+        'lat' => $request->lat,
+        'lng' => $request->lng,
+        'data' => json_encode($request->all())
+    ]);
+
+    return response()->json(['ok' => true]);
+}
 }

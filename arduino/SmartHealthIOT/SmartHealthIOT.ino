@@ -35,6 +35,7 @@ struct SensorData {
 SensorData data;
 SemaphoreHandle_t mutex;
 
+// ---------------- DEVICE STATE ----------------
 String deviceUID;
 String pairCode = "----";
 bool isPaired = false;
@@ -42,8 +43,8 @@ bool isPaired = false;
 // ---------------- UID ----------------
 String getUID() {
   uint64_t chipid = ESP.getEfuseMac();
-  char id[17];
-  sprintf(id, "%04X%08X", (uint16_t)(chipid >> 32), (uint32_t)chipid);
+  char id[20];
+  sprintf(id, "ESP32_%04X%08X", (uint16_t)(chipid >> 32), (uint32_t)chipid);
   return String(id);
 }
 
@@ -57,9 +58,8 @@ void oled(String l1, String l2, String l3) {
   display.display();
 }
 
-// ---------------- WIFI SETUP ----------------
+// ---------------- WIFI ----------------
 void setupWiFi() {
-  // Load saved server
   prefs.begin("config", true);
   String saved = prefs.getString("server", "");
   prefs.end();
@@ -82,7 +82,6 @@ void setupWiFi() {
   oled("CONNECT WIFI", "AP: ESP32-Setup", "");
   wm.autoConnect("ESP32-Setup");
 
-  // Save server after config
   strcpy(serverUrl, custom_server.getValue());
 
   prefs.begin("config", false);
@@ -92,7 +91,7 @@ void setupWiFi() {
   oled("WIFI OK", serverUrl, "");
 }
 
-// ---------------- HTTP ----------------
+// ---------------- REGISTER DEVICE ----------------
 bool registerDevice() {
   HTTPClient http;
   http.begin(String(serverUrl) + "/api/device/register");
@@ -112,7 +111,6 @@ bool registerDevice() {
 
     pairCode = res["pairing_code"].as<String>();
 
-    // 💾 SAVE pairing code (avoid re-register)
     prefs.begin("device", false);
     prefs.putString("pair", pairCode);
     prefs.end();
@@ -125,14 +123,22 @@ bool registerDevice() {
   return false;
 }
 
+// ---------------- CHECK PAIR ----------------
 bool checkPaired() {
   HTTPClient http;
-  http.begin(String(serverUrl) + "/api/device/check-pair?uid=" + deviceUID);
+  http.begin(String(serverUrl) + "/api/device/status");
+  http.addHeader("Content-Type", "application/json");
 
-  int code = http.GET();
+  StaticJsonDocument<100> doc;
+  doc["uid"] = deviceUID;
+
+  String body;
+  serializeJson(doc, body);
+
+  int code = http.POST(body);
 
   if (code == 200) {
-    StaticJsonDocument<200> res;
+    StaticJsonDocument<100> res;
     deserializeJson(res, http.getString());
 
     isPaired = res["paired"];
@@ -144,6 +150,7 @@ bool checkPaired() {
   return false;
 }
 
+// ---------------- SEND DATA ----------------
 void sendData() {
   if (!isPaired) return;
 
@@ -155,10 +162,10 @@ void sendData() {
   doc["uid"] = deviceUID;
 
   if (xSemaphoreTake(mutex, portMAX_DELAY)) {
-    doc["hr"] = data.hr;
+    doc["heart_rate"] = data.hr;
     doc["spo2"] = data.spo2;
     doc["lat"] = data.lat;
-    doc["lon"] = data.lon;
+    doc["lng"] = data.lon;
     xSemaphoreGive(mutex);
   }
 
@@ -169,12 +176,12 @@ void sendData() {
   http.end();
 }
 
-// ---------------- MAX30102 TASK (CORE 1) ----------------
-void taskMAX(void *pv) {
+// ---------------- SENSOR TASK (CORE 1) ----------------
+void taskSensor(void *pv) {
   while (true) {
     long ir = maxSensor.getIR();
 
-    float hr = ir % 100; // replace with real algo
+    float hr = constrain(ir % 120, 60, 100);
     float spo2 = 98;
 
     if (xSemaphoreTake(mutex, portMAX_DELAY)) {
@@ -183,18 +190,19 @@ void taskMAX(void *pv) {
       xSemaphoreGive(mutex);
     }
 
-    vTaskDelay(1);
+    vTaskDelay(10);
   }
 }
 
 // ---------------- SYSTEM TASK (CORE 0) ----------------
-void taskSYS(void *pv) {
-  unsigned long lastSend = 0;
+void taskSystem(void *pv) {
+
   unsigned long lastPairCheck = 0;
+  unsigned long lastSend = 0;
 
   while (true) {
 
-    // GPS read
+    // GPS
     while (GPSserial.available()) {
       gps.encode(GPSserial.read());
     }
@@ -207,34 +215,34 @@ void taskSYS(void *pv) {
       }
     }
 
-    // pairing check
-    if (!isPaired && millis() - lastPairCheck > 3000) {
+    // Check pairing
+    if (!isPaired && millis() - lastPairCheck > 5000) {
       lastPairCheck = millis();
       checkPaired();
     }
 
-    // send data
+    // Send data
     if (isPaired && millis() - lastSend > 5000) {
       lastSend = millis();
       sendData();
     }
 
-    // OLED display
+    // OLED UI
     if (!isPaired) {
-      oled("PAIR DEVICE", "UID:" + deviceUID, "CODE:" + pairCode);
+      oled("PAIR DEVICE", pairCode, deviceUID);
     } else {
-      String line1, line2;
+      String l1, l2;
 
       if (xSemaphoreTake(mutex, portMAX_DELAY)) {
-        line1 = "HR:" + String(data.hr) + " SPO2:" + String(data.spo2);
-        line2 = String(data.lat,4) + "," + String(data.lon,4);
+        l1 = "HR:" + String(data.hr) + " SPO2:" + String(data.spo2);
+        l2 = String(data.lat,4) + "," + String(data.lon,4);
         xSemaphoreGive(mutex);
       }
 
-      oled(line1, line2, "CONNECTED");
+      oled(l1, l2, "CONNECTED");
     }
 
-    vTaskDelay(100);
+    vTaskDelay(200);
   }
 }
 
@@ -243,38 +251,45 @@ void setup() {
   Serial.begin(115200);
 
   Wire.begin();
-  Wire.setClock(400000);
-
   display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
   display.setTextSize(1);
   display.setTextColor(WHITE);
 
   oled("BOOTING...", "", "");
 
-  // MAX30102
+  // Sensors
   if (!maxSensor.begin(Wire)) {
     oled("MAX30102 FAIL", "", "");
     while (1);
   }
 
-  // GPS
   GPSserial.begin(9600, SERIAL_8N1, 16, 17);
 
-  // UID
   deviceUID = getUID();
 
-  // WiFi + server config
+  // WiFi
   setupWiFi();
 
-  // request pairing
-  requestPair();
+  // Load saved pairing code
+  prefs.begin("device", true);
+  String saved = prefs.getString("pair", "");
+  prefs.end();
 
-  // mutex
+  if (saved.length() > 0) {
+    pairCode = saved;
+  } else {
+    while (!registerDevice()) {
+      oled("REGISTER FAIL", "Retrying...", "");
+      delay(3000);
+    }
+  }
+
+  // Mutex
   mutex = xSemaphoreCreateMutex();
 
-  // tasks
-  xTaskCreatePinnedToCore(taskMAX, "MAX", 4096, NULL, 2, NULL, 1);
-  xTaskCreatePinnedToCore(taskSYS, "SYS", 8192, NULL, 1, NULL, 0);
+  // Tasks
+  xTaskCreatePinnedToCore(taskSensor, "SENSOR", 4096, NULL, 2, NULL, 1);
+  xTaskCreatePinnedToCore(taskSystem, "SYSTEM", 8192, NULL, 1, NULL, 0);
 }
 
 void loop() {}

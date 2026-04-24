@@ -35,7 +35,8 @@ DallasTemperature tempSensor(&oneWire);
 char serverUrl[120] = "http://your-api.com";
 
 // ================= DATA =================
-struct SensorData {
+struct SensorData
+{
   float hr;
   float spo2;
   float temp;
@@ -43,7 +44,8 @@ struct SensorData {
   double lon;
 };
 
-struct Config {
+struct Config
+{
   int hrLow = 60;
   int hrHigh = 100;
   int spo2Low = 92;
@@ -68,14 +70,16 @@ QueueHandle_t retryQueue;
 // =================================================
 // UTIL
 // =================================================
-String getUID() {
+String getUID()
+{
   uint64_t chipid = ESP.getEfuseMac();
   char id[24];
   sprintf(id, "ESP32_%04X%08X", (uint16_t)(chipid >> 32), (uint32_t)chipid);
   return String(id);
 }
 
-void oled(String l1, String l2, String l3) {
+void oled(String l1, String l2, String l3)
+{
   display.clearDisplay();
   display.setCursor(0, 0);
   display.println(l1);
@@ -84,7 +88,8 @@ void oled(String l1, String l2, String l3) {
   display.display();
 }
 
-void beep() {
+void beep()
+{
   digitalWrite(BUZZER_PIN, HIGH);
   delay(80);
   digitalWrite(BUZZER_PIN, LOW);
@@ -93,7 +98,8 @@ void beep() {
 // =================================================
 // WIFI
 // =================================================
-void setupWiFi() {
+void setupWiFi()
+{
   WiFiManager wm;
 
   WiFiManagerParameter p_server("server", "Server URL", serverUrl, 120);
@@ -111,10 +117,36 @@ void setupWiFi() {
   oled("WIFI OK", serverUrl, "");
 }
 
+void fetchConfig()
+{
+
+  HTTPClient http;
+  http.begin(String(serverUrl) + "/api/device/config?uid=" + deviceUID);
+
+  int code = http.GET();
+
+  if (code == 200)
+  {
+    StaticJsonDocument<256> doc;
+    deserializeJson(doc, http.getString());
+
+    config.hrLow = doc["hr_low"] | config.hrLow;
+    config.hrHigh = doc["hr_high"] | config.hrHigh;
+    config.spo2Low = doc["spo2_low"] | config.spo2Low;
+    config.spo2High = doc["spo2_high"] | config.spo2High;
+    config.tempLow = doc["temp_low"] | config.tempLow;
+    config.tempHigh = doc["temp_high"] | config.tempHigh;
+
+    Serial.println("Config updated from server");
+  }
+
+  http.end();
+}
 // =================================================
 // HTTP
 // =================================================
-bool registerDevice() {
+bool registerDevice()
+{
   HTTPClient http;
   http.begin(String(serverUrl) + "/api/device/register");
   http.addHeader("Content-Type", "application/json");
@@ -127,7 +159,8 @@ bool registerDevice() {
 
   int code = http.POST(body);
 
-  if (code == 200) {
+  if (code == 200)
+  {
     StaticJsonDocument<200> res;
     deserializeJson(res, http.getString());
     pairCode = res["pairing_code"].as<String>();
@@ -144,7 +177,8 @@ bool registerDevice() {
   return false;
 }
 
-bool checkPaired() {
+bool checkPaired()
+{
   HTTPClient http;
   http.begin(String(serverUrl) + "/api/device/status");
   http.addHeader("Content-Type", "application/json");
@@ -157,7 +191,8 @@ bool checkPaired() {
 
   int code = http.POST(body);
 
-  if (code == 200) {
+  if (code == 200)
+  {
     StaticJsonDocument<120> res;
     deserializeJson(res, http.getString());
     isPaired = res["paired"];
@@ -169,7 +204,8 @@ bool checkPaired() {
   return false;
 }
 
-bool sendDataHTTP(SensorData &d) {
+bool sendDataHTTP(SensorData &d)
+{
   HTTPClient http;
   http.begin(String(serverUrl) + "/api/device/data");
   http.addHeader("Content-Type", "application/json");
@@ -191,7 +227,8 @@ bool sendDataHTTP(SensorData &d) {
   return (code == 200);
 }
 
-void sendSOSHTTP(SensorData &d) {
+void sendSOSHTTP(SensorData &d)
+{
   HTTPClient http;
   http.begin(String(serverUrl) + "/api/device/sos");
   http.addHeader("Content-Type", "application/json");
@@ -216,7 +253,8 @@ void sendSOSHTTP(SensorData &d) {
 // =================================================
 // MAX30102 TASK (CORE 1 - ISOLATED)
 // =================================================
-void taskMAX(void *pv) {
+void taskMAX(void *pv)
+{
 
   const int RATE_SIZE = 8;
   float rates[RATE_SIZE] = {0};
@@ -229,31 +267,38 @@ void taskMAX(void *pv) {
 
   const TickType_t delayMs = pdMS_TO_TICKS(20); // 50Hz
 
-  while (true) {
+  while (true)
+  {
 
     long ir = maxSensor.getIR();
     float hr = 0;
 
-    if (ir > 50000) {
+    if (ir > 50000)
+    {
 
-      if (ir > prevIR && !rising) rising = true;
+      if (ir > prevIR && !rising)
+        rising = true;
 
-      if (ir < prevIR && rising) {
+      if (ir < prevIR && rising)
+      {
         rising = false;
 
         unsigned long now = millis();
         float delta = (now - lastBeat) / 1000.0;
         lastBeat = now;
 
-        if (delta > 0.3 && delta < 2.0) {
+        if (delta > 0.3 && delta < 2.0)
+        {
           float bpm = 60.0 / delta;
 
-          if (bpm > 40 && bpm < 180) {
+          if (bpm > 40 && bpm < 180)
+          {
             rates[rateSpot++] = bpm;
             rateSpot %= RATE_SIZE;
 
             float sum = 0;
-            for (int i = 0; i < RATE_SIZE; i++) sum += rates[i];
+            for (int i = 0; i < RATE_SIZE; i++)
+              sum += rates[i];
             avgBpm = sum / RATE_SIZE;
           }
         }
@@ -263,7 +308,8 @@ void taskMAX(void *pv) {
       hr = avgBpm;
     }
 
-    if (xSemaphoreTake(mutex, portMAX_DELAY)) {
+    if (xSemaphoreTake(mutex, portMAX_DELAY))
+    {
       currentData.hr = hr;
       currentData.spo2 = (hr > 0) ? 98 : 0;
       xSemaphoreGive(mutex);
@@ -276,7 +322,8 @@ void taskMAX(void *pv) {
 // =================================================
 // SYSTEM TASK (CORE 0)
 // =================================================
-void taskSystem(void *pv) {
+void taskSystem(void *pv)
+{
 
   SensorData d;
   bool lastBtn = HIGH;
@@ -285,15 +332,19 @@ void taskSystem(void *pv) {
 
   pinMode(SOS_PIN, INPUT_PULLUP);
 
-  while (true) {
+  while (true)
+  {
 
     // GPS
-    while (GPSserial.available()) {
+    while (GPSserial.available())
+    {
       gps.encode(GPSserial.read());
     }
 
-    if (gps.location.isValid()) {
-      if (xSemaphoreTake(mutex, portMAX_DELAY)) {
+    if (gps.location.isValid())
+    {
+      if (xSemaphoreTake(mutex, portMAX_DELAY))
+      {
         currentData.lat = gps.location.lat();
         currentData.lon = gps.location.lng();
         xSemaphoreGive(mutex);
@@ -301,11 +352,13 @@ void taskSystem(void *pv) {
     }
 
     // TEMP every 2s
-    if (millis() - lastTempRead > 2000) {
+    if (millis() - lastTempRead > 2000)
+    {
       tempSensor.requestTemperatures();
       float t = tempSensor.getTempCByIndex(0);
 
-      if (xSemaphoreTake(mutex, portMAX_DELAY)) {
+      if (xSemaphoreTake(mutex, portMAX_DELAY))
+      {
         currentData.temp = t;
         xSemaphoreGive(mutex);
       }
@@ -314,63 +367,73 @@ void taskSystem(void *pv) {
     }
 
     // snapshot
-    if (xSemaphoreTake(mutex, portMAX_DELAY)) {
+    if (xSemaphoreTake(mutex, portMAX_DELAY))
+    {
       d = currentData;
       xSemaphoreGive(mutex);
     }
 
     // send data
-    if (d.hr > 0) {
+    if (d.hr > 0)
+    {
       xQueueSend(dataQueue, &d, 0);
     }
 
     // SOS button
     bool btn = digitalRead(SOS_PIN);
-    if (lastBtn == HIGH && btn == LOW) {
+    if (lastBtn == HIGH && btn == LOW)
+    {
       xQueueSend(sosQueue, &d, 0);
     }
     lastBtn = btn;
 
     // abnormal trigger
     if (
-      d.hr > 0 &&
-      (d.hr < config.hrLow || d.hr > config.hrHigh ||
-       d.spo2 < config.spo2Low ||
-       d.temp < config.tempLow || d.temp > config.tempHigh)
-    ) {
+        d.hr > 0 &&
+        (d.hr < config.hrLow || d.hr > config.hrHigh ||
+         d.spo2 < config.spo2Low ||
+         d.temp < config.tempLow || d.temp > config.tempHigh))
+    {
       xQueueSend(sosQueue, &d, 0);
     }
 
     // HTTP send
-    if (xQueueReceive(dataQueue, &d, 0)) {
-      if (!sendDataHTTP(d)) {
+    if (xQueueReceive(dataQueue, &d, 0))
+    {
+      if (!sendDataHTTP(d))
+      {
         xQueueSend(retryQueue, &d, 0);
       }
     }
 
-    if (xQueueReceive(retryQueue, &d, 0)) {
+    if (xQueueReceive(retryQueue, &d, 0))
+    {
       sendDataHTTP(d);
     }
 
-    if (xQueueReceive(sosQueue, &d, 0)) {
+    if (xQueueReceive(sosQueue, &d, 0))
+    {
       sendSOSHTTP(d);
     }
 
     // pairing check
-    if (!isPaired && millis() - lastPairCheck > 5000) {
+    if (!isPaired && millis() - lastPairCheck > 5000)
+    {
       lastPairCheck = millis();
       checkPaired();
     }
 
     // OLED
-    if (!isPaired) {
+    if (!isPaired)
+    {
       oled("PAIR DEVICE", pairCode, deviceUID);
-    } else {
+    }
+    else
+    {
       oled(
-        "HR:" + String(d.hr) + " SPO2:" + String(d.spo2),
-        "T:" + String(d.temp,1),
-        "CONNECTED"
-      );
+          "HR:" + String(d.hr) + " SPO2:" + String(d.spo2),
+          "T:" + String(d.temp, 1),
+          "CONNECTED");
     }
 
     vTaskDelay(200);
@@ -380,7 +443,8 @@ void taskSystem(void *pv) {
 // =================================================
 // SETUP
 // =================================================
-void setup() {
+void setup()
+{
 
   Serial.begin(115200);
 
@@ -394,9 +458,11 @@ void setup() {
 
   oled("BOOTING...", "", "");
 
-  if (!maxSensor.begin(Wire)) {
+  if (!maxSensor.begin(Wire))
+  {
     oled("MAX FAIL", "", "");
-    while (1);
+    while (1)
+      ;
   }
 
   GPSserial.begin(9600, SERIAL_8N1, 16, 17);
@@ -407,7 +473,8 @@ void setup() {
   prefs.begin("config", true);
   String saved = prefs.getString("server", "");
   prefs.end();
-  if (saved.length() > 0) saved.toCharArray(serverUrl, 120);
+  if (saved.length() > 0)
+    saved.toCharArray(serverUrl, 120);
 
   setupWiFi();
 
@@ -415,11 +482,18 @@ void setup() {
   pairCode = prefs.getString("pair", "");
   prefs.end();
 
-  if (pairCode == "") {
-    while (!registerDevice()) {
+  if (pairCode == "")
+  {
+    while (!registerDevice())
+    {
       oled("REGISTER FAIL", "Retrying...", "");
       delay(3000);
     }
+  }
+
+  if (isPaired)
+  {
+    fetchConfig();
   }
 
   mutex = xSemaphoreCreateMutex();

@@ -9,22 +9,30 @@
 #include <Adafruit_SSD1306.h>
 #include "MAX30105.h"
 
-// ---------------- CONFIG ----------------
+// ================= OLED =================
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_ADDR 0x3C
 
-// ---------------- OBJECTS ----------------
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+// ================= PINS =================
+#define SOS_PIN 4
+
+// ================= GPS =================
 TinyGPSPlus gps;
-MAX30105 maxSensor;
 HardwareSerial GPSserial(1);
+
+// ================= SENSOR =================
+MAX30105 maxSensor;
+
+// ================= STORAGE =================
 Preferences prefs;
 
-// ---------------- WIFI MANAGER ----------------
-char serverUrl[100] = "http://your-api.com";
+// ================= SERVER =================
+char serverUrl[120] = "http://your-api.com";
 
-// ---------------- DATA ----------------
+// ================= DATA =================
 struct SensorData {
   float hr;
   float spo2;
@@ -32,57 +40,63 @@ struct SensorData {
   double lon;
 };
 
-SensorData data;
-SemaphoreHandle_t mutex;
+struct Config {
+  int hrLow = 60;
+  int hrHigh = 100;
+  int spo2Low = 92;
+  int spo2High = 100;
+  float tempLow = 35;
+  float tempHigh = 38;
+};
 
-// ---------------- DEVICE STATE ----------------
+SensorData data;
+Config config;
+
+// ================= DEVICE =================
 String deviceUID;
 String pairCode = "----";
 bool isPaired = false;
 
-// ---------------- UID ----------------
-String getUID() {
-  uint64_t chipid = ESP.getEfuseMac();
-  char id[20];
-  sprintf(id, "ESP32_%04X%08X", (uint16_t)(chipid >> 32), (uint32_t)chipid);
-  return String(id);
-}
+// ================= MUTEX =================
+SemaphoreHandle_t mutex;
 
-// ---------------- OLED ----------------
+// =================================================
+// OLED
+// =================================================
 void oled(String l1, String l2, String l3) {
   display.clearDisplay();
-  display.setCursor(0,0);
+  display.setCursor(0, 0);
   display.println(l1);
   display.println(l2);
   display.println(l3);
   display.display();
 }
 
-// ---------------- WIFI ----------------
-void setupWiFi() {
-  prefs.begin("config", true);
-  String saved = prefs.getString("server", "");
-  prefs.end();
+// =================================================
+// UID
+// =================================================
+String getUID() {
+  uint64_t chipid = ESP.getEfuseMac();
+  char id[24];
+  sprintf(id, "ESP32_%04X%08X", (uint16_t)(chipid >> 32), (uint32_t)chipid);
+  return String(id);
+}
 
-  if (saved.length() > 0) {
-    saved.toCharArray(serverUrl, 100);
-  }
+// =================================================
+// WIFI SETUP (WiFiManager)
+// =================================================
+void setupWiFi() {
 
   WiFiManager wm;
 
-  WiFiManagerParameter custom_server(
-    "server",
-    "Server URL",
-    serverUrl,
-    100
-  );
+  WiFiManagerParameter p_server("server", "Server URL", serverUrl, 120);
+  wm.addParameter(&p_server);
 
-  wm.addParameter(&custom_server);
+  oled("WIFI SETUP", "ESP32-Setup", "");
 
-  oled("CONNECT WIFI", "AP: ESP32-Setup", "");
   wm.autoConnect("ESP32-Setup");
 
-  strcpy(serverUrl, custom_server.getValue());
+  strcpy(serverUrl, p_server.getValue());
 
   prefs.begin("config", false);
   prefs.putString("server", serverUrl);
@@ -91,8 +105,11 @@ void setupWiFi() {
   oled("WIFI OK", serverUrl, "");
 }
 
-// ---------------- REGISTER DEVICE ----------------
+// =================================================
+// REGISTER DEVICE
+// =================================================
 bool registerDevice() {
+
   HTTPClient http;
   http.begin(String(serverUrl) + "/api/device/register");
   http.addHeader("Content-Type", "application/json");
@@ -123,13 +140,16 @@ bool registerDevice() {
   return false;
 }
 
-// ---------------- CHECK PAIR ----------------
+// =================================================
+// CHECK PAIR STATUS
+// =================================================
 bool checkPaired() {
+
   HTTPClient http;
   http.begin(String(serverUrl) + "/api/device/status");
   http.addHeader("Content-Type", "application/json");
 
-  StaticJsonDocument<100> doc;
+  StaticJsonDocument<120> doc;
   doc["uid"] = deviceUID;
 
   String body;
@@ -138,7 +158,7 @@ bool checkPaired() {
   int code = http.POST(body);
 
   if (code == 200) {
-    StaticJsonDocument<100> res;
+    StaticJsonDocument<120> res;
     deserializeJson(res, http.getString());
 
     isPaired = res["paired"];
@@ -150,8 +170,34 @@ bool checkPaired() {
   return false;
 }
 
-// ---------------- SEND DATA ----------------
+// =================================================
+// OPTIONAL: ONE-TIME CONFIG SYNC (AFTER PAIRING)
+// =================================================
+void fetchConfigOnce() {
+
+  HTTPClient http;
+  http.begin(String(serverUrl) + "/api/device/config?uid=" + deviceUID);
+
+  int code = http.GET();
+
+  if (code == 200) {
+    StaticJsonDocument<300> res;
+    deserializeJson(res, http.getString());
+
+    config.hrLow = res["hr_low"] | config.hrLow;
+    config.hrHigh = res["hr_high"] | config.hrHigh;
+    config.spo2Low = res["spo2_low"] | config.spo2Low;
+    config.spo2High = res["spo2_high"] | config.spo2High;
+  }
+
+  http.end();
+}
+
+// =================================================
+// SEND DATA
+// =================================================
 void sendData() {
+
   if (!isPaired) return;
 
   HTTPClient http;
@@ -176,9 +222,38 @@ void sendData() {
   http.end();
 }
 
-// ---------------- SENSOR TASK (CORE 1) ----------------
+// =================================================
+// SOS ALERT
+// =================================================
+void sendSOS() {
+
+  HTTPClient http;
+  http.begin(String(serverUrl) + "/api/device/sos");
+  http.addHeader("Content-Type", "application/json");
+
+  StaticJsonDocument<250> doc;
+  doc["uid"] = deviceUID;
+  doc["hr"] = data.hr;
+  doc["spo2"] = data.spo2;
+  doc["lat"] = data.lat;
+  doc["lng"] = data.lon;
+
+  String body;
+  serializeJson(doc, body);
+
+  http.POST(body);
+  http.end();
+
+  oled("🚨 SOS SENT", "EMERGENCY", "");
+}
+
+// =================================================
+// SENSOR TASK (CORE 1)
+// =================================================
 void taskSensor(void *pv) {
+
   while (true) {
+
     long ir = maxSensor.getIR();
 
     float hr = constrain(ir % 120, 60, 100);
@@ -190,15 +265,25 @@ void taskSensor(void *pv) {
       xSemaphoreGive(mutex);
     }
 
+    // AUTO SOS
+    if (hr < config.hrLow || hr > config.hrHigh || spo2 < config.spo2Low) {
+      sendSOS();
+    }
+
     vTaskDelay(10);
   }
 }
 
-// ---------------- SYSTEM TASK (CORE 0) ----------------
+// =================================================
+// SYSTEM TASK (CORE 0)
+// =================================================
 void taskSystem(void *pv) {
 
-  unsigned long lastPairCheck = 0;
   unsigned long lastSend = 0;
+  unsigned long lastCheck = 0;
+  bool lastBtn = HIGH;
+
+  pinMode(SOS_PIN, INPUT_PULLUP);
 
   while (true) {
 
@@ -215,19 +300,26 @@ void taskSystem(void *pv) {
       }
     }
 
-    // Check pairing
-    if (!isPaired && millis() - lastPairCheck > 5000) {
-      lastPairCheck = millis();
+    // SOS BUTTON
+    bool btn = digitalRead(SOS_PIN);
+    if (lastBtn == HIGH && btn == LOW) {
+      sendSOS();
+    }
+    lastBtn = btn;
+
+    // CHECK PAIRING
+    if (!isPaired && millis() - lastCheck > 5000) {
+      lastCheck = millis();
       checkPaired();
     }
 
-    // Send data
+    // SEND DATA
     if (isPaired && millis() - lastSend > 5000) {
       lastSend = millis();
       sendData();
     }
 
-    // OLED UI
+    // OLED
     if (!isPaired) {
       oled("PAIR DEVICE", pairCode, deviceUID);
     } else {
@@ -235,7 +327,7 @@ void taskSystem(void *pv) {
 
       if (xSemaphoreTake(mutex, portMAX_DELAY)) {
         l1 = "HR:" + String(data.hr) + " SPO2:" + String(data.spo2);
-        l2 = String(data.lat,4) + "," + String(data.lon,4);
+        l2 = String(data.lat, 4) + "," + String(data.lon, 4);
         xSemaphoreGive(mutex);
       }
 
@@ -246,8 +338,11 @@ void taskSystem(void *pv) {
   }
 }
 
-// ---------------- SETUP ----------------
+// =================================================
+// SETUP
+// =================================================
 void setup() {
+
   Serial.begin(115200);
 
   Wire.begin();
@@ -257,9 +352,8 @@ void setup() {
 
   oled("BOOTING...", "", "");
 
-  // Sensors
   if (!maxSensor.begin(Wire)) {
-    oled("MAX30102 FAIL", "", "");
+    oled("MAX FAIL", "", "");
     while (1);
   }
 
@@ -267,16 +361,24 @@ void setup() {
 
   deviceUID = getUID();
 
-  // WiFi
-  setupWiFi();
-
-  // Load saved pairing code
-  prefs.begin("device", true);
-  String saved = prefs.getString("pair", "");
+  // load saved server
+  prefs.begin("config", true);
+  String savedServer = prefs.getString("server", "");
   prefs.end();
 
-  if (saved.length() > 0) {
-    pairCode = saved;
+  if (savedServer.length() > 0) {
+    savedServer.toCharArray(serverUrl, 120);
+  }
+
+  setupWiFi();
+
+  // load pairing
+  prefs.begin("device", true);
+  String savedPair = prefs.getString("pair", "");
+  prefs.end();
+
+  if (savedPair.length() > 0) {
+    pairCode = savedPair;
   } else {
     while (!registerDevice()) {
       oled("REGISTER FAIL", "Retrying...", "");
@@ -284,10 +386,13 @@ void setup() {
     }
   }
 
-  // Mutex
   mutex = xSemaphoreCreateMutex();
 
-  // Tasks
+  // OPTIONAL config sync AFTER pairing only
+  if (pairCode.length() > 0) {
+    fetchConfigOnce();
+  }
+
   xTaskCreatePinnedToCore(taskSensor, "SENSOR", 4096, NULL, 2, NULL, 1);
   xTaskCreatePinnedToCore(taskSystem, "SYSTEM", 8192, NULL, 1, NULL, 0);
 }

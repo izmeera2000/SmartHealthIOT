@@ -1,0 +1,17 @@
+BOOT
+ ↓
+WiFiManager connect
+ ↓
+Load saved pairing_code
+ ↓
+IF not exist → POST /device/register
+ ↓
+Receive pairing_code
+ ↓
+Show on OLED
+ ↓
+Loop check /device/check-pair
+ ↓
+Paired 
+ ↓
+Send data every 5s

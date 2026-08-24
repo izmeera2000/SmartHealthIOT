@@ -7,14 +7,31 @@ use Illuminate\Database\Eloquent\Model;
 class Device extends Model
 {
     protected $fillable = [
-        'uid',
-        'user_id',
-        'pairing_code',
-        'paired_at'
+        'doctor_id',
+        'device_uid',
+        'mac_address',
+        'device_name',
+        'firmware_version',
+        'auth_token',
+        'status',
+        'last_seen_at',
     ];
+
+    protected $hidden = [
+        'auth_token',
+    ];
+
+    protected $casts = [
+        'last_seen_at' => 'datetime',
+    ];
+
+    public function doctor()
+    {
+        return $this->belongsTo(User::class, 'doctor_id');
+    }
 
     public function readings()
     {
-        return $this->hasMany(Reading::class);
+        return $this->hasMany(SensorReading::class);
     }
 }

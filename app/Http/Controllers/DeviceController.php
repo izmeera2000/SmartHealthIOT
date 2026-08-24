@@ -2,116 +2,127 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Device;
-use Str;
-use App\Models\UserHealthConfig;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
 class DeviceController extends Controller
 {
+    /**
+     * Display all devices belonging to the logged-in doctor.
+     */
+    public function index()
+    {
+        $devices = Device::where('doctor_id', auth()->id())
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'devices' => $devices,
+        ]);
+    }
+
+    /**
+     * Register a new ESP32 device.
+     */
     public function register(Request $request)
     {
-        $request->validate([
-            'uid' => 'required|string'
+        $validated = $request->validate([
+            'device_uid' => 'required|string|max:255|unique:devices,device_uid',
+            'mac_address' => 'required|string|max:255|unique:devices,mac_address',
+            'device_name' => 'nullable|string|max:255',
+            'firmware_version' => 'nullable|string|max:100',
         ]);
 
-        $device = Device::firstOrCreate(
-            ['uid' => $request->uid],
-            ['pairing_code' => strtoupper(Str::random(6))]
-        );
-
-        if (!$device->user_id) {
-            $device->pairing_code = strtoupper(Str::random(6));
-            $device->save();
-        }
+        $device = Device::create([
+            'doctor_id' => auth()->id(),
+            'device_uid' => $validated['device_uid'],
+            'mac_address' => $validated['mac_address'],
+            'device_name' => $validated['device_name'] ?? null,
+            'firmware_version' => $validated['firmware_version'] ?? null,
+            'auth_token' => Str::random(64),
+            'status' => 'active',
+            'last_seen_at' => now(),
+        ]);
 
         return response()->json([
-            'pairing_code' => $device->pairing_code
-        ]);
+            'success' => true,
+            'message' => 'ESP32 registered successfully.',
+            'device' => $device,
+            'device_token' => $device->auth_token,
+        ], 201);
     }
 
-    public function status(Request $request)
+    /**
+     * Show a specific device.
+     */
+    public function show($deviceId)
     {
-        $request->validate([
-            'uid' => 'required'
-        ]);
-
-        $device = Device::where('uid', $request->uid)->first();
+        $device = Device::where('doctor_id', auth()->id())
+            ->findOrFail($deviceId);
 
         return response()->json([
-            'paired' => $device && $device->user_id !== null
+            'success' => true,
+            'device' => $device,
         ]);
     }
 
-
-    public function storeData(Request $request)
+    /**
+     * Update device information.
+     */
+    public function update(Request $request, $deviceId)
     {
-        $request->validate([
-            'uid' => 'required'
+        $device = Device::where('doctor_id', auth()->id())
+            ->findOrFail($deviceId);
+
+        $validated = $request->validate([
+            'device_name' => 'nullable|string|max:255',
+            'firmware_version' => 'nullable|string|max:100',
+            'status' => 'nullable|in:active,inactive',
         ]);
 
-        $device = Device::where('uid', $request->uid)->first();
-
-        if (!$device || !$device->user_id) {
-            return response()->json([
-                'message' => 'Device not paired'
-            ], 403);
-        }
-
-        $device->readings()->create([
-            'heart_rate' => $request->heart_rate,
-            'spo2' => $request->spo2,
-            'temp' => $request->temp,
-            'lat' => $request->lat,
-            'lng' => $request->lng,
-        ]);
-
-        return response()->json(['ok' => true]);
-    }
-
-
-    public function sos(Request $request)
-    {
-        $device = Device::where('uid', $request->uid)->first();
-
-        if (!$device)
-            return response()->json(['error' => 'invalid'], 404);
-
-        // store alert
-        $device->alerts()->create([
-            'type' => 'SOS',
-            'lat' => $request->lat,
-            'lng' => $request->lng,
-            'temp' => $request->temp,
-            'data' => json_encode($request->all())
-        ]);
-
-        return response()->json(['ok' => true]);
-    }
-
-
-    public function config(Request $request)
-    {
-        $uid = $request->query('uid');
-
-        $device = Device::where('uid', $uid)->first();
-
-        if (!$device || !$device->user_id) {
-            return response()->json(['error' => 'Not paired'], 400);
-        }
-
-        $config = UserHealthConfig::where('user_id', $device->user_id)->first();
-
-        if (!$config) {
-            return response()->json(['error' => 'No config'], 404);
-        }
+        $device->update($validated);
 
         return response()->json([
-            'hr_low' => $config->hr_low,
-            'hr_high' => $config->hr_high,
-            'spo2_low' => $config->spo2_low,
-            'spo2_high' => $config->spo2_high,
-            'temp_low' => $config->temp_low,
-            'temp_high' => $config->temp_high,
+            'success' => true,
+            'message' => 'Device updated successfully.',
+            'device' => $device,
+        ]);
+    }
+
+    /**
+     * Delete a device.
+     */
+    public function destroy($deviceId)
+    {
+        $device = Device::where('doctor_id', auth()->id())
+            ->findOrFail($deviceId);
+
+        $device->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Device deleted successfully.',
+        ]);
+    }
+
+    /**
+     * Get readings for a device.
+     */
+    public function readings($deviceId)
+    {
+        $device = Device::where('doctor_id', auth()->id())
+            ->findOrFail($deviceId);
+
+        $readings = $device->readings()
+            ->latest('recorded_at')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'device' => $device,
+            'readings' => $readings,
         ]);
     }
 }

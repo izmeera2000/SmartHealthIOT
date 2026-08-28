@@ -59,34 +59,6 @@ Route::middleware('auth')->group(function () {
         ->name('logout');
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Device Routes
-    |--------------------------------------------------------------------------
-    */
-
-    Route::prefix('device')
-        ->name('device.')
-        ->group(function () {
-
-            Route::get('/', [DeviceController::class, 'index'])
-                ->name('index');
-
-            Route::post('/register', [DeviceController::class, 'register'])
-                ->name('register');
-
-            Route::get('/{device}', [DeviceController::class, 'show'])
-                ->name('show');
-
-            Route::put('/{device}', [DeviceController::class, 'update'])
-                ->name('update');
-
-            Route::delete('/{device}', [DeviceController::class, 'destroy'])
-                ->name('destroy');
-
-            Route::get('/{device}/readings', [DeviceController::class, 'readings'])
-                ->name('readings');
-
-        });
-
+ 
+  
 });

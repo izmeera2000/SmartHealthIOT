@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SensorReading extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'device_id',
         'heart_rate',
@@ -15,13 +18,20 @@ class SensorReading extends Model
         'recorded_at',
     ];
 
-    protected $casts = [
-        'heart_rate' => 'integer',
-        'body_temperature' => 'float',
-        'ambient_temperature' => 'float',
-        'battery_level' => 'integer',
-        'recorded_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'body_temperature' => 'decimal:2',
+            'ambient_temperature' => 'decimal:2',
+            'recorded_at' => 'datetime',
+        ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Device
+    |--------------------------------------------------------------------------
+    */
 
     public function device()
     {

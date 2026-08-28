@@ -1,100 +1,202 @@
-<nav x-data="{ open: false }" class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
-    <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
-                <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
-                    </a>
-                </div>
-
-                <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
-                </div>
-            </div>
-
-            <!-- Settings Dropdown -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
-                <x-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
-
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                        </button>
-                    </x-slot>
-
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
-
-                        <!-- Authentication -->
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-
-                            <x-dropdown-link :href="route('logout')"
-                                    onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                {{ __('Log Out') }}
-                            </x-dropdown-link>
-                        </form>
-                    </x-slot>
-                </x-dropdown>
-            </div>
-
-            <!-- Hamburger -->
-            <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-900 focus:text-gray-500 dark:focus:text-gray-400 transition duration-150 ease-in-out">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-        </div>
+  <!-- Header -->
+  <header class="header">
+    <!-- Header Left -->
+    <div class="header-left">
+      <a href="index.html" class="header-logo">
+        <img src="assets/img/logo.webp" alt="EasyAdmin">
+        <span>EasyAdmin</span>
+      </a>
+      <button class="sidebar-toggle" title="Toggle Sidebar">
+        <i class="bi bi-list"></i>
+      </button>
     </div>
 
-    <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
-        </div>
-
-        <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
-            </div>
-
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
-
-                <!-- Authentication -->
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
-                </form>
-            </div>
-        </div>
+    <!-- Header Search (Desktop) - Expandable -->
+    <div class="header-search">
+      <form class="search-form collapsed" action="search-results.html" method="GET">
+        <button type="button" class="search-toggle-btn"><i class="bi bi-search"></i></button>
+        <input type="search" name="q" placeholder="Search..." autocomplete="off">
+      </form>
     </div>
-</nav>
+
+    <!-- Header Right -->
+    <div class="header-right">
+      <!-- Desktop Actions (hidden on mobile, shown in mobile menu) -->
+      <div class="header-actions-desktop">
+        <!-- Theme Toggle -->
+        <button class="header-action theme-toggle" title="Toggle Theme">
+          <i class="bi bi-moon icon-dark"></i>
+          <i class="bi bi-sun icon-light"></i>
+        </button>
+
+        <!-- Fullscreen Toggle -->
+        <button class="header-action fullscreen-toggle" onclick="toggleFullscreen()" title="Fullscreen">
+          <i class="bi bi-fullscreen icon-enter"></i>
+          <i class="bi bi-fullscreen-exit icon-exit"></i>
+        </button>
+
+        <!-- Notifications -->
+        <div class="header-action dropdown notification-dropdown">
+          <button class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-bell"></i>
+            <span class="badge">3</span>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end">
+            <div class="notification-header">
+              <h6>Notifications</h6>
+              <a href="dashboard-finance.html#" data-notification-action="mark-all-read">Mark all read</a>
+            </div>
+            <div class="notification-list">
+              <div class="notification-item unread">
+                <div class="notification-icon success">
+                  <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="notification-content">
+                  <div class="notification-title">Order Completed</div>
+                  <div class="notification-text">Your order #12345 has been delivered</div>
+                  <div class="notification-time">5 min ago</div>
+                </div>
+              </div>
+              <div class="notification-item unread">
+                <div class="notification-icon warning">
+                  <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="notification-content">
+                  <div class="notification-title">Low Storage</div>
+                  <div class="notification-text">Server storage is running low (85% used)</div>
+                  <div class="notification-time">1 hour ago</div>
+                </div>
+              </div>
+              <div class="notification-item">
+                <div class="notification-icon info">
+                  <i class="bi bi-info-circle"></i>
+                </div>
+                <div class="notification-content">
+                  <div class="notification-title">New Feature</div>
+                  <div class="notification-text">Dark mode is now available</div>
+                  <div class="notification-time">2 hours ago</div>
+                </div>
+              </div>
+            </div>
+            <div class="notification-footer">
+              <a href="notifications.html">View all notifications</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Dropdown - shadcn style -->
+        <div class="header-action dropdown user-dropdown">
+          <button class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="assets/img/profile-img.webp" alt="User" class="avatar">
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li class="dropdown-header">
+              <img src="assets/img/profile-img.webp" alt="User" class="user-avatar">
+              <div class="user-info">
+                <h6>John Doe</h6>
+                <span><a href="https://bootstrapmade.com/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ec86838482ac89948d819c8089c28f8381">[email&#160;protected]</a></span>
+              </div>
+            </li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li>
+              <a class="dropdown-item" href="profile.html">
+                <i class="bi bi-person"></i> Profile
+                <span class="shortcut">⇧P</span>
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="settings.html">
+                <i class="bi bi-gear"></i> Settings
+                <span class="shortcut">⇧S</span>
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="notifications.html">
+                <i class="bi bi-bell"></i> Notifications
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="activity.html">
+                <i class="bi bi-activity"></i> Activity
+              </a>
+            </li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li>
+              <a class="dropdown-item dropdown-item-danger" href="auth-login.html">
+                <i class="bi bi-box-arrow-right"></i> Sign Out
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Mobile Actions (visible only on mobile) -->
+      <div class="header-actions-mobile">
+        <!-- Search Toggle (Mobile) -->
+        <button class="header-action search-toggle" title="Search">
+          <i class="bi bi-search"></i>
+        </button>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="header-action mobile-menu-toggle" title="More">
+          <i class="bi bi-three-dots-vertical"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+    <!-- Mobile Search -->
+  <div class="mobile-search">
+    <form class="search-form" action="search-results.html" method="GET">
+      <input type="search" name="q" placeholder="Search..." autocomplete="off">
+      <button type="submit"><i class="bi bi-search"></i></button>
+    </form>
+  </div>
+
+  <!-- Mobile Header Menu -->
+  <div class="mobile-header-menu">
+    <div class="mobile-header-menu-content">
+      <!-- Theme Toggle -->
+      <button class="mobile-menu-item theme-toggle" title="Toggle Theme">
+        <i class="bi bi-moon icon-dark"></i>
+        <i class="bi bi-sun icon-light"></i>
+        <span class="mobile-menu-label">Theme</span>
+      </button>
+
+      <!-- Fullscreen Toggle -->
+      <button class="mobile-menu-item fullscreen-toggle" onclick="toggleFullscreen()" title="Fullscreen">
+        <i class="bi bi-fullscreen icon-enter"></i>
+        <i class="bi bi-fullscreen-exit icon-exit"></i>
+        <span class="mobile-menu-label">Fullscreen</span>
+      </button>
+
+      <!-- Notifications -->
+      <a href="notifications.html" class="mobile-menu-item">
+        <i class="bi bi-bell"></i>
+        <span class="badge">3</span>
+        <span class="mobile-menu-label">Notifications</span>
+      </a>
+
+      <!-- Profile -->
+      <a href="profile.html" class="mobile-menu-item">
+        <i class="bi bi-person"></i>
+        <span class="mobile-menu-label">Profile</span>
+      </a>
+
+      <!-- Settings -->
+      <a href="settings.html" class="mobile-menu-item">
+        <i class="bi bi-gear"></i>
+        <span class="mobile-menu-label">Settings</span>
+      </a>
+
+      <!-- Sign Out -->
+      <a href="auth-login.html" class="mobile-menu-item mobile-menu-item-danger">
+        <i class="bi bi-box-arrow-right"></i>
+        <span class="mobile-menu-label">Sign Out</span>
+      </a>
+    </div>
+  </div>

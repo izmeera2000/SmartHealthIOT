@@ -48,11 +48,11 @@
 
                             <tr>
 
-                                <th style="width:40px;">
+                                {{-- <th style="width:40px;">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="selectAll">
                                     </div>
-                                </th>
+                                </th> --}}
 
                                 <th>Patient</th>
 
@@ -136,35 +136,35 @@
                     |--------------------------------------------------------------------------
                     */
 
-                    {
-                        data: 'id',
+                    // {
+                    //     data: 'id',
 
-                        name: 'id',
+                    //     name: 'id',
 
-                        orderable: false,
+                    //     orderable: false,
 
-                        searchable: false,
+                    //     searchable: false,
 
-                        render: function (data) {
+                    //     render: function (data) {
 
-                            return `
-                                    <div class="form-check">
+                    //         return `
+                    //                 <div class="form-check">
 
-                                        <input
-                                            class="form-check-input patient-checkbox"
-                                            type="checkbox"
-                                            value="${data}"
-                                            style="
-                                                border: 2px solid #6c757d;
-                                            "
-                                        >
+                    //                     <input
+                    //                         class="form-check-input patient-checkbox"
+                    //                         type="checkbox"
+                    //                         value="${data}"
+                    //                         style="
+                    //                             border: 2px solid #6c757d;
+                    //                         "
+                    //                     >
 
-                                    </div>
-                                `;
+                    //                 </div>
+                    //             `;
 
-                        }
+                    //     }
 
-                    },
+                    // },
 
 
                     /*

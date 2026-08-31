@@ -12,6 +12,7 @@ class SensorReading extends Model
     protected $fillable = [
         'device_id',
         'heart_rate',
+        'spo2',
         'body_temperature',
         'ambient_temperature',
         'battery_level',
@@ -21,8 +22,11 @@ class SensorReading extends Model
     protected function casts(): array
     {
         return [
+            'heart_rate' => 'integer',
+            'spo2' => 'integer',
             'body_temperature' => 'decimal:2',
             'ambient_temperature' => 'decimal:2',
+            'battery_level' => 'integer',
             'recorded_at' => 'datetime',
         ];
     }

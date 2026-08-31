@@ -560,6 +560,90 @@
 
                 </div>
 
+                {{-- Assigned Device --}}
+
+<div class="card">
+
+    <div class="card-header">
+
+        <h5 class="card-title mb-0">
+            Assigned Device
+        </h5>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="mb-3">
+
+            <label class="form-label">
+                Device
+            </label>
+
+            <select
+                name="device_id"
+                class="form-select"
+            >
+
+                <option value="">
+                    No device assigned
+                </option>
+
+                @foreach($devices as $device)
+
+                    <option
+                        value="{{ $device->id }}"
+                        @selected(
+                            old(
+                                'device_id',
+                                $patient->devices->first()?->id
+                            ) == $device->id
+                        )
+                    >
+
+                        {{ $device->device_name ?: 'Unnamed Device' }}
+                        — {{ $device->device_uid }}
+
+                    </option>
+
+                @endforeach
+
+            </select>
+
+            <small class="text-muted">
+                Select the device assigned to this patient.
+            </small>
+
+        </div>
+
+        @if($patient->devices->count())
+
+            <div class="alert alert-light border mb-0">
+
+                <div class="d-flex align-items-center gap-2">
+
+                    <i class="bi bi-info-circle text-primary"></i>
+
+                    <div class="small">
+
+                        Current device:
+
+                        <strong>
+                            {{ $patient->devices->first()->device_name ?: 'Unnamed Device' }}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        @endif
+
+    </div>
+
+</div>
+
 
                 {{-- Actions --}}
 

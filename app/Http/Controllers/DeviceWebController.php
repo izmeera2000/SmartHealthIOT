@@ -7,6 +7,7 @@ use App\Models\Patient;
 use App\Models\SensorReading;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Yajra\DataTables\Facades\DataTables;
 
 class DeviceWebController extends Controller
 {
@@ -34,18 +35,18 @@ class DeviceWebController extends Controller
      * REGISTRATION FORM
      * =========================================================
      */
-public function create()
-{
-    $patients = Patient::with('user')
-        ->where('doctor_id', auth()->id())
-        ->latest()
-        ->get();
+    public function create()
+    {
+        $patients = Patient::with('user')
+            ->where('doctor_id', auth()->id())
+            ->latest()
+            ->get();
 
-    return view(
-        'doctor.devices.create',
-        compact('patients')
-    );
-}
+        return view(
+            'doctor.devices.create',
+            compact('patients')
+        );
+    }
 
 
     /**
@@ -156,10 +157,10 @@ public function create()
      */
     public function show(Device $device)
     {
-        // abort_unless(
-        //     $device->doctor_id === auth()->id(),
-        //     403
-        // );
+        abort_unless(
+            $device->doctor_id === auth()->id(),
+            403
+        );
 
 
         /*
@@ -179,13 +180,25 @@ public function create()
             ->first();
 
 
-        return view(
-            'doctor.devices.show',
-            compact(
-                'device',
-                'latestReading'
-            )
-        );
+        return view('doctor.devices.show', [
+            'pageTitle' => $device->device_name,
+
+            'breadcrumbs' => [
+                [
+                    'title' => 'Devices',
+                    'url' => route('doctor.doctors.index'),
+                ],
+                [
+                    'title' => $device->device_name,
+                    'url' => route('doctor.devices.show', ['device' => $device->id]),
+                ],
+
+            ],
+
+            'device' => $device,
+            'latestReading' => $latestReading,
+        ]);
+
     }
 
 
@@ -194,28 +207,100 @@ public function create()
      * DEVICE READINGS
      * =========================================================
      */
-    public function readings(Device $device)
+    public function readings(Request $request, Device $device)
     {
-        abort_unless(
-            $device->doctor_id === auth()->id(),
-            403
-        );
+        // Make sure doctor can only access their own device
+        abort_unless($device->doctor_id === auth()->id(), 403);
 
+        if ($request->ajax()) {
 
-        $readings = $device
-            ->sensorReadings()
-            ->latest('recorded_at')
-            ->paginate(20);
+            $readings = $device->sensorReadings()
+                ->select([
+                    'id',
+                    'device_id',
+                    'recorded_at',
+                    'heart_rate',
+                    'spo2',
+                    'body_temperature',
+                    'ambient_temperature',
+                    'battery_level',
+                ]);
 
+            return DataTables::eloquent($readings)
+                ->editColumn('recorded_at', function ($reading) {
+                    return '
+                    <div class="fw-semibold">
+                        ' . $reading->recorded_at->format('d M Y') . '
+                    </div>
+                    <small class="text-muted">
+                        ' . $reading->recorded_at->format('h:i:s A') . '
+                    </small>
+                ';
+                })
 
-        return view(
-            'doctor.devices.readings',
-            compact(
-                'device',
-                'readings'
-            )
-        );
+                ->editColumn('heart_rate', function ($reading) {
+                    if ($reading->heart_rate === null) {
+                        return '-';
+                    }
+
+                    return '<strong>' . $reading->heart_rate . '</strong>
+                        <small class="text-muted">BPM</small>';
+                })
+
+                ->editColumn('spo2', function ($reading) {
+                    if ($reading->spo2 === null) {
+                        return '-';
+                    }
+
+                    return '<strong>' . $reading->spo2 . '</strong>
+                        <small class="text-muted">%</small>';
+                })
+
+                ->editColumn('body_temperature', function ($reading) {
+                    if ($reading->body_temperature === null) {
+                        return '-';
+                    }
+
+                    return '<strong>' .
+                        number_format($reading->body_temperature, 2) .
+                        '</strong>
+                    <small class="text-muted">°C</small>';
+                })
+
+                ->editColumn('ambient_temperature', function ($reading) {
+                    if ($reading->ambient_temperature === null) {
+                        return '-';
+                    }
+
+                    return '<strong>' .
+                        number_format($reading->ambient_temperature, 2) .
+                        '</strong>
+                    <small class="text-muted">°C</small>';
+                })
+
+                ->editColumn('battery_level', function ($reading) {
+                    if ($reading->battery_level === null) {
+                        return '-';
+                    }
+
+                    return '<strong>' . $reading->battery_level . '</strong>
+                        <small class="text-muted">%</small>';
+                })
+
+                ->rawColumns([
+                    'recorded_at',
+                    'heart_rate',
+                    'spo2',
+                    'body_temperature',
+                    'ambient_temperature',
+                    'battery_level',
+                ])
+                ->make(true);
+        }
+
+        return view('doctor.devices.readings', compact('device'));
     }
+
 
 
     /**

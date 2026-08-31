@@ -4,41 +4,7 @@
 
 <section class="section">
 
-    {{-- HEADER --}}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-
-        <div>
-            <h5 class="mb-1">
-                {{ $device->device_name ?: 'Unnamed Device' }}
-            </h5>
-
-            <small class="text-muted">
-                {{ $device->device_uid }}
-            </small>
-        </div>
-
-        <div class="d-flex gap-2">
-
-            <a href="{{ route('doctor.devices.readings', $device) }}"
-               class="btn btn-success">
-
-                <i class="bi bi-activity"></i>
-                View Readings
-
-            </a>
-
-            <a href="{{ route('doctor.devices.index') }}"
-               class="btn btn-outline-secondary">
-
-                <i class="bi bi-arrow-left"></i>
-                Back
-
-            </a>
-
-        </div>
-
-    </div>
-
+ 
 
     @if(session('success'))
         <div class="alert alert-success">

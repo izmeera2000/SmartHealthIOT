@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Patient;
 use App\Models\User;
+use App\Models\Device;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
- 
+
 
 class PatientController extends Controller
 {
@@ -20,8 +21,11 @@ class PatientController extends Controller
 
     public function index()
     {
+
+
         return view('doctor.patients.index', [
             'pageTitle' => 'Patients',
+
 
             'breadcrumbs' => [
                 [
@@ -32,208 +36,293 @@ class PatientController extends Controller
         ]);
     }
 
-
     /*
     |--------------------------------------------------------------------------
     | PATIENT JSON DATA
     |--------------------------------------------------------------------------
     */
 
+
     public function data(Request $request)
-{
-    $query = Patient::query()
-        ->with('user');
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Query
+        |--------------------------------------------------------------------------
+        */
 
-    /*
-    |--------------------------------------------------------------------------
-    | Total records before search
-    |--------------------------------------------------------------------------
-    */
-
-    $recordsTotal = Patient::count();
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Search
-    |--------------------------------------------------------------------------
-    */
-
-    if ($request->filled('search.value')) {
-
-        $search = $request->input('search.value');
-
-        $query->where(function ($query) use ($search) {
-
-            $query->where('patient_id', 'like', "%{$search}%")
-
-                ->orWhere('ic_number', 'like', "%{$search}%")
-
-                ->orWhere('gender', 'like', "%{$search}%")
-
-                ->orWhere('phone', 'like', "%{$search}%")
-
-                ->orWhereHas('user', function ($query) use ($search) {
-
-                    $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
-
-                });
-
-        });
-    }
+        $query = Patient::query()
+            ->with([
+                'user',
+                'devices',
+            ]);
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Filtered records
-    |--------------------------------------------------------------------------
-    */
+        /*
+        |--------------------------------------------------------------------------
+        | Total records before search
+        |--------------------------------------------------------------------------
+        */
 
-    $recordsFiltered = $query->count();
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Ordering
-    |--------------------------------------------------------------------------
-    */
-
-    $columns = [
-
-        0 => 'id',
-        1 => 'id',
-        2 => 'patient_id',
-        3 => 'date_of_birth',
-        4 => 'gender',
-        5 => 'phone',
-        6 => 'blood_type',
-        7 => 'created_at',
-
-    ];
+        $recordsTotal = Patient::count();
 
 
-    $orderColumn = $request->input(
-        'order.0.column',
-        0
-    );
+        /*
+        |--------------------------------------------------------------------------
+        | Search
+        |--------------------------------------------------------------------------
+        */
 
-    $orderDirection = $request->input(
-        'order.0.dir',
-        'desc'
-    );
+        if ($request->filled('search.value')) {
+
+            $search = $request->input('search.value');
+
+            $query->where(function ($query) use ($search) {
+
+                $query->where('patient_id', 'like', "%{$search}%")
+
+                    ->orWhere('ic_number', 'like', "%{$search}%")
+
+                    ->orWhere('gender', 'like', "%{$search}%")
+
+                    ->orWhere('phone', 'like', "%{$search}%")
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Search User
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->orWhereHas('user', function ($query) use ($search) {
+
+                        $query->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+
+                    })
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Search Assigned Devices
+                    |--------------------------------------------------------------------------
+                    */
+
+                    ->orWhereHas('devices', function ($query) use ($search) {
+
+                        $query->where('device_name', 'like', "%{$search}%")
+                            ->orWhere('device_uid', 'like', "%{$search}%");
+
+                    });
+
+            });
+        }
 
 
-    $orderBy = $columns[$orderColumn] ?? 'id';
+        /*
+        |--------------------------------------------------------------------------
+        | Filtered records
+        |--------------------------------------------------------------------------
+        */
 
-    $orderDirection =
-        in_array($orderDirection, ['asc', 'desc'])
+        $recordsFiltered = $query->count();
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Ordering
+        |--------------------------------------------------------------------------
+        */
+
+        $columns = [
+
+            0 => 'id',
+            1 => 'id',
+            2 => 'patient_id',
+            3 => 'date_of_birth',
+            4 => 'gender',
+            5 => 'phone',
+            6 => 'blood_type',
+            7 => 'created_at',
+
+        ];
+
+
+        $orderColumn = $request->input(
+            'order.0.column',
+            0
+        );
+
+        $orderDirection = $request->input(
+            'order.0.dir',
+            'desc'
+        );
+
+
+        $orderBy = $columns[$orderColumn] ?? 'id';
+
+        $orderDirection = in_array(
+            $orderDirection,
+            ['asc', 'desc']
+        )
             ? $orderDirection
             : 'desc';
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Pagination
-    |--------------------------------------------------------------------------
-    */
+        /*
+        |--------------------------------------------------------------------------
+        | Pagination
+        |--------------------------------------------------------------------------
+        */
 
-    $start = (int) $request->input('start', 0);
+        $start = (int) $request->input(
+            'start',
+            0
+        );
 
-    $length = (int) $request->input('length', 10);
+        $length = (int) $request->input(
+            'length',
+            10
+        );
 
-    $length = min(
-        max($length, 1),
-        100
-    );
-
-
-    $patients = $query
-        ->orderBy($orderBy, $orderDirection)
-        ->skip($start)
-        ->take($length)
-        ->get();
+        $length = min(
+            max($length, 1),
+            100
+        );
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | Transform
-    |--------------------------------------------------------------------------
-    */
+        $patients = $query
+            ->orderBy(
+                $orderBy,
+                $orderDirection
+            )
+            ->skip($start)
+            ->take($length)
+            ->get();
 
-    $data = $patients->map(function ($patient) {
 
-        return [
+        /*
+        |--------------------------------------------------------------------------
+        | Transform
+        |--------------------------------------------------------------------------
+        */
 
-            'id' => $patient->id,
+        $data = $patients->map(function ($patient) {
 
-            'patient_id' =>
-                $patient->patient_id,
+            return [
 
-            'name' =>
-                $patient->user?->name,
+                'id' =>
+                    $patient->id,
 
-            'email' =>
-                $patient->user?->email,
+                'patient_id' =>
+                    $patient->patient_id,
 
-            'age' =>
-                $patient->date_of_birth
+                'name' =>
+                    $patient->user?->name,
+
+                'email' =>
+                    $patient->user?->email,
+
+                'age' =>
+                    $patient->date_of_birth
                     ? $patient->date_of_birth->age
                     : null,
 
-            'gender' =>
-                $patient->gender,
+                'gender' =>
+                    $patient->gender,
 
-            'phone' =>
-                $patient->phone,
+                'phone' =>
+                    $patient->phone,
 
-            'blood_type' =>
-                $patient->blood_type,
+                'blood_type' =>
+                    $patient->blood_type,
 
-            'created_at' =>
-                $patient->created_at
+
+                /*
+                |--------------------------------------------------------------------------
+                | Assigned Devices
+                |--------------------------------------------------------------------------
+                */
+
+                'devices' =>
+                    $patient->devices->map(function ($device) {
+
+                        return [
+
+                            'id' =>
+                                $device->id,
+
+                            'name' =>
+                                $device->device_name
+                                ?: 'Unnamed Device',
+
+                            'uid' =>
+                                $device->device_uid,
+
+                            'status' =>
+                                $device->status,
+
+                        ];
+
+                    })->values(),
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Created At
+                |--------------------------------------------------------------------------
+                */
+
+                'created_at' =>
+                    $patient->created_at
                     ? $patient->created_at->format('d M Y')
                     : null,
 
-            'show_url' =>
-                route(
-                    'doctor.patients.show',
-                    $patient
-                ),
 
-            'edit_url' =>
-                route(
-                    'doctor.patients.edit',
-                    $patient
-                ),
+                /*
+                |--------------------------------------------------------------------------
+                | URLs
+                |--------------------------------------------------------------------------
+                */
 
-        ];
+                'show_url' =>
+                    route(
+                        'doctor.patients.show',
+                        $patient
+                    ),
 
-    });
+                'edit_url' =>
+                    route(
+                        'doctor.patients.edit',
+                        $patient
+                    ),
+
+            ];
+
+        });
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | DataTables Response
-    |--------------------------------------------------------------------------
-    */
+        /*
+        |--------------------------------------------------------------------------
+        | DataTables Response
+        |--------------------------------------------------------------------------
+        */
 
-    return response()->json([
+        return response()->json([
 
-        'draw' =>
-            (int) $request->input('draw'),
+            'draw' =>
+                (int) $request->input('draw'),
 
-        'recordsTotal' =>
-            $recordsTotal,
+            'recordsTotal' =>
+                $recordsTotal,
 
-        'recordsFiltered' =>
-            $recordsFiltered,
+            'recordsFiltered' =>
+                $recordsFiltered,
 
-        'data' =>
-            $data,
+            'data' =>
+                $data,
 
-    ]);
-}
+        ]);
+    }
+
 
 
     /*
@@ -269,7 +358,7 @@ class PatientController extends Controller
     |--------------------------------------------------------------------------
     */
 
-        public function store(Request $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
@@ -337,25 +426,28 @@ class PatientController extends Controller
     |--------------------------------------------------------------------------
     */
 
-   public function show(Patient $patient)
-{
-    $patient->load([
-        'user',
-    ]);
+    public function show(Patient $patient)
+    {
+        $patient->load([
+            'user',
+            'devices',
 
-    return view('doctor.patients.show', [
-        'patient' => $patient,
+        ]);
 
-        'pageTitle' => 'Patient Details',
+        return view('doctor.patients.show', [
+            'patient' => $patient,
 
-        'breadcrumbs' => [
-            [
-                'title' => 'Patients',
-                'url' => route('doctor.patients.index'),
+            'pageTitle' => 'Patient Details',
+
+            'breadcrumbs' => [
+                [
+                    'title' => 'Patients',
+                    'url' => route('doctor.patients.index'),
+                ],
             ],
-        ],
-    ]);
-}
+        ]);
+    }
+
 
 
     /*
@@ -366,12 +458,19 @@ class PatientController extends Controller
 
     public function edit(Patient $patient)
     {
-        $patient->load('user');
-
-        return view('doctor.patients.edit', [
-            'patient' => $patient,
-            'pageTitle' => 'Edit Patient',
+        $patient->load([
+            'user',
+            'devices',
         ]);
+
+        $devices = Device::where('doctor_id', auth()->id())
+            ->orderBy('device_name')
+            ->get();
+
+        return view('doctor.patients.edit', compact(
+            'patient',
+            'devices'
+        ));
     }
 
 
@@ -381,7 +480,7 @@ class PatientController extends Controller
     |--------------------------------------------------------------------------
     */
 
-      public function update(Request $request, Patient $patient)
+    public function update(Request $request, Patient $patient)
     {
         $patient->load('user');
 
@@ -414,22 +513,54 @@ class PatientController extends Controller
             'blood_type' => ['nullable', 'string'],
             'height' => ['nullable', 'numeric'],
             'weight' => ['nullable', 'numeric'],
+
+            'device_id' => [
+                'nullable',
+                'exists:devices,id',
+            ],
         ]);
 
         DB::transaction(function () use ($validated, $patient) {
 
+            /*
+            |--------------------------------------------------------------------------
+            | Update User
+            |--------------------------------------------------------------------------
+            */
+
             $patient->user->update([
-                'name' => $validated['first_name'] . ' ' . $validated['last_name'],
-                'email' => $validated['email'],
+                'name' =>
+                    $validated['first_name'] . ' ' . $validated['last_name'],
+
+                'email' =>
+                    $validated['email'],
             ]);
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Update Patient
+            |--------------------------------------------------------------------------
+            */
+
             $patient->update([
-                'patient_id' => $validated['patient_id'],
-                'ic_number' => $validated['ic_number'] ?? null,
-                'date_of_birth' => $validated['date_of_birth'] ?? null,
-                'gender' => $validated['gender'] ?? null,
-                'phone' => $validated['phone'] ?? null,
-                'address' => $validated['address'] ?? null,
+                'patient_id' =>
+                    $validated['patient_id'],
+
+                'ic_number' =>
+                    $validated['ic_number'] ?? null,
+
+                'date_of_birth' =>
+                    $validated['date_of_birth'] ?? null,
+
+                'gender' =>
+                    $validated['gender'] ?? null,
+
+                'phone' =>
+                    $validated['phone'] ?? null,
+
+                'address' =>
+                    $validated['address'] ?? null,
 
                 'emergency_contact_name' =>
                     $validated['emergency_contact_name'] ?? null,
@@ -440,10 +571,41 @@ class PatientController extends Controller
                 'emergency_contact_relationship' =>
                     $validated['emergency_contact_relationship'] ?? null,
 
-                'blood_type' => $validated['blood_type'] ?? null,
-                'height' => $validated['height'] ?? null,
-                'weight' => $validated['weight'] ?? null,
+                'blood_type' =>
+                    $validated['blood_type'] ?? null,
+
+                'height' =>
+                    $validated['height'] ?? null,
+
+                'weight' =>
+                    $validated['weight'] ?? null,
             ]);
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Device Assignment
+            |--------------------------------------------------------------------------
+            */
+
+            // First remove any device currently assigned to this patient
+            Device::where('patient_id', $patient->id)
+                ->update([
+                    'patient_id' => null,
+                ]);
+
+
+            // Assign selected device
+            if (!empty($validated['device_id'])) {
+
+                $device = Device::where('id', $validated['device_id'])
+                    ->where('doctor_id', auth()->id())
+                    ->firstOrFail();
+
+                $device->update([
+                    'patient_id' => $patient->id,
+                ]);
+            }
         });
 
         return redirect()
@@ -451,7 +613,7 @@ class PatientController extends Controller
             ->with('success', 'Patient updated successfully.');
     }
 
-        public function destroy(Patient $patient)
+    public function destroy(Patient $patient)
     {
         $user = $patient->user;
 
@@ -470,4 +632,4 @@ class PatientController extends Controller
             ->with('success', 'Patient deleted successfully.');
     }
 }
- 
+

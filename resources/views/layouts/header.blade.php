@@ -2,8 +2,8 @@
 <header class="header">
   <!-- Header Left -->
   <div class="header-left">
-    <a href="index.html" class="header-logo">
-      <img src="assets/img/logo.webp" alt="SmartHealthIOT">
+    <a href="{{ route('dashboard') }}" class="header-logo">
+      <img src="{{ asset('assets/img/logo.webp') }}" alt="SmartHealthIOT">
       <span>SmartHealthIOT</span>
     </a>
     <button class="sidebar-toggle" title="Toggle Sidebar">

@@ -265,28 +265,28 @@
    * Search Bar Toggle (Mobile)
    */
   function initSearch() {
-    const searchToggle = document.querySelector('.search-toggle');
-    const mobileSearch = document.querySelector('.mobile-search');
+    // const searchToggle = document.querySelector('.search-toggle');
+    // const mobileSearch = document.querySelector('.mobile-search');
     const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
     const mobileHeaderMenu = document.querySelector('.mobile-header-menu');
-    const searchInput = mobileSearch ? mobileSearch.querySelector('input') : null;
+    // const searchInput = mobileSearch ? mobileSearch.querySelector('input') : null;
 
     // Search toggle
-    if (searchToggle && mobileSearch) {
-      searchToggle.addEventListener('click', function(e) {
-        e.preventDefault();
+    // if (searchToggle && mobileSearch) {
+    //   searchToggle.addEventListener('click', function(e) {
+    //     e.preventDefault();
 
-        // Close mobile menu if open
-        if (mobileHeaderMenu && mobileHeaderMenu.classList.contains('active')) {
-          mobileHeaderMenu.classList.remove('active');
-        }
+    //     // Close mobile menu if open
+    //     if (mobileHeaderMenu && mobileHeaderMenu.classList.contains('active')) {
+    //       mobileHeaderMenu.classList.remove('active');
+    //     }
 
-        mobileSearch.classList.toggle('active');
-        if (mobileSearch.classList.contains('active') && searchInput) {
-          searchInput.focus();
-        }
-      });
-    }
+    //     mobileSearch.classList.toggle('active');
+    //     if (mobileSearch.classList.contains('active') && searchInput) {
+    //       searchInput.focus();
+    //     }
+    //   });
+    // }
 
     // Mobile menu toggle (three dots)
     if (mobileMenuToggle && mobileHeaderMenu) {
@@ -294,9 +294,9 @@
         e.preventDefault();
 
         // Close search if open
-        if (mobileSearch && mobileSearch.classList.contains('active')) {
-          mobileSearch.classList.remove('active');
-        }
+        // if (mobileSearch && mobileSearch.classList.contains('active')) {
+        //   mobileSearch.classList.remove('active');
+        // }
 
         mobileHeaderMenu.classList.toggle('active');
       });
@@ -305,9 +305,9 @@
     // Close on click outside
     document.addEventListener('click', function(e) {
       // Close mobile search
-      if (mobileSearch && !mobileSearch.contains(e.target) && !searchToggle.contains(e.target)) {
-        mobileSearch.classList.remove('active');
-      }
+      // if (mobileSearch && !mobileSearch.contains(e.target) && !searchToggle.contains(e.target)) {
+      //   mobileSearch.classList.remove('active');
+      // }
 
       // Close mobile header menu
       if (mobileHeaderMenu && mobileMenuToggle &&
@@ -319,7 +319,7 @@
     // Close menus on window resize to desktop
     window.addEventListener('resize', function() {
       if (window.innerWidth >= 768) {
-        if (mobileSearch) mobileSearch.classList.remove('active');
+        // if (mobileSearch) mobileSearch.classList.remove('active');
         if (mobileHeaderMenu) mobileHeaderMenu.classList.remove('active');
       }
     });

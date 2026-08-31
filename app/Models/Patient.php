@@ -10,6 +10,8 @@ class Patient extends Model
     use HasFactory;
 
     protected $fillable = [
+            'doctor_id',
+
         'user_id',
         'patient_id',
         'ic_number',
@@ -88,4 +90,12 @@ class Patient extends Model
     {
         return $this->hasMany(Device::class);
     }
+
+    public function doctor()
+{
+    return $this->belongsTo(User::class, 'doctor_id');
 }
+
+}
+
+

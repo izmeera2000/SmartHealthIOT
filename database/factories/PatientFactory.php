@@ -17,6 +17,10 @@ class PatientFactory extends Factory
         $lastName = fake()->lastName();
 
         return [
+        'doctor_id' => User::role('doctor')
+                ->inRandomOrder()
+                ->value('id'),
+
             'user_id' => User::factory()->create([
                 'name' => $firstName . ' ' . $lastName,
                 'email' => fake()->unique()->safeEmail(),

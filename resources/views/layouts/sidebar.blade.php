@@ -2,8 +2,8 @@
 <aside class="sidebar">
   <!-- Sidebar Header -->
   <div class="sidebar-header">
-    <a href="index.html" class="sidebar-logo">
-      <img src="assets/img/logo.webp" alt="SmartHealthIOT">
+    <a href="{{ route('dashboard') }}" class="sidebar-logo">
+      <img src="{{ asset('assets/img/logo.webp') }}" alt="SmartHealthIOT">
       <span class="sidebar-logo-text">
         <span class="sidebar-logo-name">SmartHealthIOT</span>
         <span class="sidebar-logo-tagline">Admin Panel</span>
@@ -28,7 +28,7 @@
 
       <!-- Users -->
       <li class="nav-item has-submenu ">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false" data-tooltip="Patients">
+        <a class="nav-link" href="#" aria-expanded="false" data-tooltip="Patients">
           <i class="ph-duotone ph-users"></i>
           <span>Patients</span>
           <i class="ph-duotone ph-caret-down nav-arrow"></i>
@@ -56,14 +56,14 @@
 
 
       <li class="nav-item has-submenu ">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false" data-tooltip="Devices">
+        <a class="nav-link" href="#" aria-expanded="false" data-tooltip="Devices">
           <i class="ph-duotone ph-first-aid-kit"></i>
           <span>Devices</span>
           <i class="ph-duotone ph-caret-down nav-arrow"></i>
         </a>
         <ul class="nav-submenu ">
           <li><a class="nav-link " href="{{ route('doctor.devices.index') }}">List</a></li>
-          {{-- <li><a class="nav-link " href="users-view.html">Patients View</a></li> --}}
+           {{-- <li><a class="nav-link " href="users-view.html">Patients View</a></li> --}}
           {{-- <li><a class="nav-link " href="users-edit.html">Patients Edit</a></li> --}}
           {{-- <li><a class="nav-link " href="profile.html">Profile</a></li> --}}
           <!-- 3rd Level - Settings submenu -->
@@ -84,13 +84,13 @@
 
 
       <li class="nav-item has-submenu ">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false" data-tooltip="Doctors">
+        <a class="nav-link" href="#" aria-expanded="false" data-tooltip="Staff">
           <i class="ph-duotone ph-users"></i>
           <span>Doctors</span>
           <i class="ph-duotone ph-caret-down nav-arrow"></i>
         </a>
         <ul class="nav-submenu ">
-          <li><a class="nav-link " href="{{ route('doctor.doctors.index') }}">List</a></li>
+          <li><a class="nav-link " href="{{ route('doctor.doctors.index') }}">Directory</a></li>
           {{-- <li><a class="nav-link " href="users-view.html">Patients View</a></li> --}}
           {{-- <li><a class="nav-link " href="users-edit.html">Patients Edit</a></li> --}}
           {{-- <li><a class="nav-link " href="profile.html">Profile</a></li> --}}

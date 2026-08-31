@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\DeviceWebController;
+use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PatientController;
@@ -127,7 +130,7 @@ Route::middleware('auth')->group(function () {
                 ])->name('update');
 
 
-                     Route::delete('/{patient}', [
+                Route::delete('/{patient}', [
                     PatientController::class,
                     'destroy'
                 ])->name('destroy');
@@ -147,9 +150,63 @@ Route::middleware('auth')->group(function () {
             ->name('devices.')
             ->group(function () {
 
-                Route::get('/', function () {
-                    return view('doctor.devices.index');
-                })->name('index');
+          
+
+                       // Page
+                Route::get('/', [
+                    DeviceWebController::class,
+                    'index'
+                ])->name('index');
+
+                // JSON data for DataTables
+                Route::get('/data', [
+                    DeviceWebController::class,
+                    'data'
+                ])->name('data');
+
+                // Create
+                Route::get('/create', [
+                    DeviceWebController::class,
+                    'create'
+                ])->name('create');
+
+                    
+
+                Route::post('/', [
+                    DeviceWebController::class,
+                    'store'
+                ])->name('store');
+
+                // Show
+                Route::get('/{device}', [
+                    DeviceWebController::class,
+                    'show'
+                ])->name('show');
+
+                // Edit
+                Route::get('/{device}/edit', [
+                    DeviceWebController::class,
+                    'edit'
+                ])->name('edit');
+
+                Route::put('/{device}', [
+                    DeviceWebController::class,
+                    'update'
+                ])->name('update');
+
+
+        Route::get('/{device}/readings', [
+                    DeviceWebController::class,
+                    'readings'
+                ])->name('readings');
+
+                Route::delete('/{device}', [
+                    DeviceWebController::class,
+                    'destroy'
+                ])->name('destroy');
+
+
+
 
             });
 
@@ -164,9 +221,51 @@ Route::middleware('auth')->group(function () {
             ->name('doctors.')
             ->group(function () {
 
-                Route::get('/', function () {
-                    return view('doctor.doctors.index');
-                })->name('index');
+                // Page
+                Route::get('/', [
+                    DoctorController::class,
+                    'index'
+                ])->name('index');
+
+                // JSON data for DataTables
+                Route::get('/data', [
+                    DoctorController::class,
+                    'data'
+                ])->name('data');
+
+                // Create
+                Route::get('/create', [
+                    DoctorController::class,
+                    'create'
+                ])->name('create');
+
+                Route::post('/', [
+                    DoctorController::class,
+                    'store'
+                ])->name('store');
+
+                // Show
+                Route::get('/{patient}', [
+                    DoctorController::class,
+                    'show'
+                ])->name('show');
+
+                // Edit
+                Route::get('/{patient}/edit', [
+                    DoctorController::class,
+                    'edit'
+                ])->name('edit');
+
+                Route::put('/{patient}', [
+                    DoctorController::class,
+                    'update'
+                ])->name('update');
+
+
+                Route::delete('/{patient}', [
+                    DoctorController::class,
+                    'destroy'
+                ])->name('destroy');
 
             });
 

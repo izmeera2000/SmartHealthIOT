@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Doctor;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -18,10 +19,19 @@ class DatabaseSeeder extends Seeder
             'email' => 'doctor@example.com',
             'password' => Hash::make('123'),
         ]);
-
         $user->assignRole('doctor');
 
-                Patient::factory()->count(10)->create();
+
+                $user2 = User::factory()->create([
+            'name' => 'Patient',
+            'email' => 'patient@example.com',
+            'password' => Hash::make('123'),
+        ]);
+        $user2->assignRole('patient');
+
+
+                Patient::factory()->count(30)->create();
+                Doctor::factory()->count(30)->create();
 
     }
 }

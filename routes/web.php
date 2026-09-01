@@ -6,6 +6,7 @@ use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\BeamsTestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -158,6 +159,8 @@ Route::middleware('auth')->group(function () {
                     'index'
                 ])->name('index');
 
+                
+
                 // JSON data for DataTables
                 Route::get('/data', [
                     DeviceWebController::class,
@@ -307,6 +310,9 @@ Route::middleware('auth')->group(function () {
     ])->name('profile.destroy');
 
 });
+
+
+
 
 
 /*

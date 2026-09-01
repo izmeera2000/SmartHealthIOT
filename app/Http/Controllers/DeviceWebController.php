@@ -18,16 +18,293 @@ class DeviceWebController extends Controller
      */
     public function index()
     {
-        $devices = Device::with(['patient.user'])
-            ->where('doctor_id', auth()->id())
-            ->latest()
-            ->get();
+        
 
-        return view(
-            'doctor.devices.index',
-            compact('devices')
-        );
+   
+                return view('doctor.devices.index', [
+            'pageTitle' => 'Devices',
+
+
+            'breadcrumbs' => [
+                [
+                    'title' => 'Patients',
+                    'url' => route('doctor.devices.index'),
+                ],
+            ],
+        ]);
     }
+
+   /**
+     * =========================================================
+     * DEVICE LIST
+     * =========================================================
+     */
+
+    public function data(Request $request)
+{
+    /*
+    |--------------------------------------------------------------------------
+    | Query
+    |--------------------------------------------------------------------------
+    */
+
+    $query = Device::query()
+        ->with([
+            'patient.user',
+        ])
+        ->where('doctor_id', auth()->id());
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Total records
+    |--------------------------------------------------------------------------
+    */
+
+    $recordsTotal = Device::where(
+        'doctor_id',
+        auth()->id()
+    )->count();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Search
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->filled('search.value')) {
+
+        $search = $request->input('search.value');
+
+        $query->where(function ($query) use ($search) {
+
+            $query->where('device_name', 'like', "%{$search}%")
+
+                ->orWhere('device_uid', 'like', "%{$search}%")
+
+                ->orWhere('mac_address', 'like', "%{$search}%")
+
+                ->orWhere('device_type', 'like', "%{$search}%")
+
+                ->orWhere('status', 'like', "%{$search}%")
+
+                ->orWhereHas('patient', function ($query) use ($search) {
+
+                    $query->where(
+                        'patient_id',
+                        'like',
+                        "%{$search}%"
+                    );
+
+                    $query->orWhereHas('user', function ($query) use ($search) {
+
+                        $query->where(
+                            'name',
+                            'like',
+                            "%{$search}%"
+                        )
+                        ->orWhere(
+                            'email',
+                            'like',
+                            "%{$search}%"
+                        );
+
+                    });
+
+                });
+
+        });
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Filtered records
+    |--------------------------------------------------------------------------
+    */
+
+    $recordsFiltered = $query->count();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ordering
+    |--------------------------------------------------------------------------
+    */
+
+    $columns = [
+
+        0 => 'device_name',
+        1 => 'device_uid',
+        2 => 'device_type',
+        3 => 'status',
+        4 => 'last_seen_at',
+        5 => 'created_at',
+
+    ];
+
+
+    $orderColumn = (int) $request->input(
+        'order.0.column',
+        0
+    );
+
+    $orderDirection = $request->input(
+        'order.0.dir',
+        'desc'
+    );
+
+
+    $orderBy = $columns[$orderColumn] ?? 'created_at';
+
+
+    $orderDirection = in_array(
+        $orderDirection,
+        ['asc', 'desc'],
+        true
+    )
+        ? $orderDirection
+        : 'desc';
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pagination
+    |--------------------------------------------------------------------------
+    */
+
+    $start = max(
+        (int) $request->input('start', 0),
+        0
+    );
+
+    $length = (int) $request->input(
+        'length',
+        10
+    );
+
+    $length = min(
+        max($length, 1),
+        100
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Get Devices
+    |--------------------------------------------------------------------------
+    */
+
+    $devices = $query
+        ->orderBy(
+            $orderBy,
+            $orderDirection
+        )
+        ->skip($start)
+        ->take($length)
+        ->get();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transform
+    |--------------------------------------------------------------------------
+    */
+
+    $data = $devices->map(function ($device) {
+
+        return [
+
+            'id' => $device->id,
+
+            'device_name' =>
+                $device->device_name
+                    ?: 'Unnamed Device',
+
+            'mac_address' =>
+                $device->mac_address,
+
+            'device_uid' =>
+                $device->device_uid,
+
+            'device_type' =>
+                $device->device_type ?: '-',
+
+            'status' =>
+                $device->status,
+
+            'last_seen_at' =>
+                $device->last_seen_at
+                    ? $device->last_seen_at->diffForHumans()
+                    : null,
+
+            'last_seen_full' =>
+                $device->last_seen_at
+                    ? $device->last_seen_at->format(
+                        'd M Y, h:i A'
+                    )
+                    : null,
+
+            'patient' =>
+                $device->patient?->user
+                    ? [
+                        'id' =>
+                            $device->patient->id,
+
+                        'name' =>
+                            $device->patient->user->name,
+
+                        'patient_id' =>
+                            $device->patient->patient_id,
+                    ]
+                    : null,
+
+            'created_at' =>
+                $device->created_at
+                    ? $device->created_at->format(
+                        'd M Y'
+                    )
+                    : null,
+
+            'show_url' =>
+                route(
+                    'doctor.devices.show',
+                    $device
+                ),
+
+            'delete_url' =>
+                route(
+                    'doctor.devices.destroy',
+                    $device
+                ),
+
+        ];
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DataTables Response
+    |--------------------------------------------------------------------------
+    */
+
+    return response()->json([
+
+        'draw' =>
+            (int) $request->input('draw'),
+
+        'recordsTotal' =>
+            $recordsTotal,
+
+        'recordsFiltered' =>
+            $recordsFiltered,
+
+        'data' =>
+            $data,
+
+    ]);
+}
 
 
     /**

@@ -120,7 +120,7 @@
 
 
 
-@section('scripts')
+@push('scripts')
 
 
 
@@ -248,4 +248,4 @@ $(document).ready(function () {
 
 </script>
 
-@endsection
+@endpush

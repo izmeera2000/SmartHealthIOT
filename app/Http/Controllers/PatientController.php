@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Events\PatientRegistered;
 
 
 class PatientController extends Controller
@@ -390,7 +391,7 @@ class PatientController extends Controller
                 'password' => Hash::make($validated['password']),
             ]);
 
-            Patient::create([
+            $patient = Patient::create([
                 'user_id' => $user->id,
                 'patient_id' => $validated['patient_id'],
                 'ic_number' => $validated['ic_number'] ?? null,
@@ -398,6 +399,7 @@ class PatientController extends Controller
                 'gender' => $validated['gender'] ?? null,
                 'phone' => $validated['phone'] ?? null,
                 'address' => $validated['address'] ?? null,
+                'doctor_id' => auth()->id(),
 
                 'emergency_contact_name' =>
                     $validated['emergency_contact_name'] ?? null,
@@ -412,6 +414,7 @@ class PatientController extends Controller
                 'height' => $validated['height'] ?? null,
                 'weight' => $validated['weight'] ?? null,
             ]);
+         
         });
 
         return redirect()
@@ -442,6 +445,10 @@ class PatientController extends Controller
             'breadcrumbs' => [
                 [
                     'title' => 'Patients',
+                    'url' => route('doctor.patients.index'),
+                ],
+                [
+                    'title' => $patient->user->name,
                     'url' => route('doctor.patients.index'),
                 ],
             ],

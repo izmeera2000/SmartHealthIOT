@@ -97,10 +97,65 @@
         <i class="bi bi-arrow-up"></i>
     </a>
 
+ 
+    
+
+<!-- =========================================
+     Pusher Channel Toast Notification
+========================================= -->
+
+<div
+    class="toast-container position-fixed top-0 end-0 p-3"
+    style="z-index: 9999;"
+>
+    <div
+        id="channelNotificationToast"
+        class="toast"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+    >
+
+        <div class="toast-header">
+
+            <i class="bi bi-bell-fill text-primary me-2"></i>
+
+            <strong
+                class="me-auto"
+                id="channelToastTitle"
+            >
+                Smart Health IoT
+            </strong>
+
+            <small>Just now</small>
+
+            <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="toast"
+                aria-label="Close"
+            ></button>
+
+        </div>
+
+        <div
+            class="toast-body"
+            id="channelToastMessage"
+        >
+            You have a new notification.
+        </div>
+
+    </div>
+</div>
+
+
+
 
     @include('layouts.scripts')
 
-    @yield('scripts')
+
+
+    @stack('scripts')
 
 </body>
 

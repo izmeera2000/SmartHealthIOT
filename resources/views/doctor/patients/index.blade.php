@@ -92,12 +92,12 @@
 @endsection
 
 
-@section('scripts')
+@push('scripts')
 
     <script>
 
         $(document).ready(function () {
-
+          
             /*
             |--------------------------------------------------------------------------
             | DataTable
@@ -109,14 +109,14 @@
                 processing: true,
 
                 serverSide: true,
-
+ 
                 responsive: true,
 
                 pageLength: 5,
 
                 lengthMenu: [
-                    [5,10, 25, 50, 100],
-                    [5,10, 25, 50, 100]
+                    [5, 10, 25, 50, 100],
+                    [5, 10, 25, 50, 100]
                 ],
 
                 ajax: {
@@ -125,7 +125,7 @@
                 },
 
                 order: [
-                    [7, 'desc']
+                    [6, 'desc']
                 ],
 
                 columns: [
@@ -175,6 +175,7 @@
 
                     {
                         data: 'name',
+                        responsivePriority: 2,
 
                         name: 'name',
 
@@ -188,43 +189,43 @@
 
                             return `
 
-                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="d-flex align-items-center gap-3">
 
-                                        <div
-                                            class="rounded-circle bg-primary-light
-                                                   d-flex align-items-center
-                                                   justify-content-center"
-                                            style="
-                                                width:40px;
-                                                height:40px;
-                                            "
-                                        >
+                                            <div
+                                                class="rounded-circle bg-primary-light
+                                                       d-flex align-items-center
+                                                       justify-content-center"
+                                                style="
+                                                    width:40px;
+                                                    height:40px;
+                                                "
+                                            >
 
-                                            <i class="bi bi-person text-primary"></i>
-
-                                        </div>
-
-
-                                        <div>
-
-                                            <div class="fw-semibold text-primary">
-
-                                                ${escapeHtml(name)}
+                                                <i class="bi bi-person text-primary"></i>
 
                                             </div>
 
 
-                                            <div class="text-muted small">
+                                            <div>
 
-                                                ${escapeHtml(email)}
+                                                <div class="fw-semibold text-primary">
+
+                                                    ${escapeHtml(name)}
+
+                                                </div>
+
+
+                                                <div class="text-muted small">
+
+                                                    ${escapeHtml(email)}
+
+                                                </div>
 
                                             </div>
 
                                         </div>
 
-                                    </div>
-
-                                `;
+                                    `;
 
                         }
 
@@ -240,14 +241,15 @@
                     {
                         data: 'patient_id',
                         name: 'patient_id',
+                        responsivePriority: 1,
 
                         render: function (data) {
 
                             return `
-                        <span class="text-primary">
-                            ${escapeHtml(data || '—')}
-                        </span>
-                    `;
+                            <span class="text-primary">
+                                ${escapeHtml(data || '—')}
+                            </span>
+                        `;
 
                         }
                     },
@@ -260,7 +262,7 @@
                     {
                         data: 'age',
 
-                        name: 'date_of_birth',
+                        name: 'age',
 
                         render: function (data) {
 
@@ -295,10 +297,10 @@
                                 data.slice(1);
 
                             return `
-                <span class="text-primary fw-semibold">
-                    ${escapeHtml(gender)}
-                </span>
-            `;
+                    <span class="text-primary fw-semibold">
+                        ${escapeHtml(gender)}
+                    </span>
+                `;
 
                         }
 
@@ -319,10 +321,10 @@
                         render: function (data) {
 
                             return `
-                <span class="text-primary">
-                    ${escapeHtml(data || '—')}
-                </span>
-            `;
+                    <span class="text-primary">
+                        ${escapeHtml(data || '—')}
+                    </span>
+                `;
 
                         }
 
@@ -348,13 +350,13 @@
 
                             return `
 
-                                    <span class="badge bg-danger-subtle text-danger">
+                                        <span class="badge bg-danger-subtle text-danger">
 
-                                        ${escapeHtml(data)}
+                                            ${escapeHtml(data)}
 
-                                    </span>
+                                        </span>
 
-                                `;
+                                    `;
 
                         }
 
@@ -375,10 +377,10 @@
                         render: function (data) {
 
                             return `
-                <span class="text-primary">
-                    ${escapeHtml(data || '—')}
-                </span>
-            `;
+                    <span class="text-primary">
+                        ${escapeHtml(data || '—')}
+                    </span>
+                `;
 
                         }
 
@@ -394,6 +396,7 @@
                         data: null,
 
                         orderable: false,
+                        responsivePriority: 1,
 
                         searchable: false,
 
@@ -401,85 +404,89 @@
 
                             return `
 
-                                    <div class="dropdown">
+                                        <div class="dropdown">
 
-                                        <button
-                                            class="btn btn-sm btn-link"
-                                            type="button"
-                                            data-bs-toggle="dropdown"
-                                        >
+                                            <button
+                                                class="btn btn-sm btn-light"
+                                                type="button"
+                                                data-bs-toggle="dropdown"
+                                            >
 
-                                            <i class="bi bi-three-dots-vertical"></i>
+                                                <i class="bi bi-three-dots-vertical"></i>
 
-                                        </button>
-
-
-                                        <ul class="dropdown-menu dropdown-menu-end">
-
-                                            <li>
-
-                                                <a
-                                                    class="dropdown-item"
-                                                    href="${row.show_url}"
-                                                >
-
-                                                    <i class="bi bi-eye me-2"></i>
-
-                                                    View
-
-                                                </a>
-
-                                            </li>
+                                            </button>
 
 
-                                            <li>
-
-                                                <a
-                                                    class="dropdown-item"
-                                                    href="${row.edit_url}"
-                                                >
-
-                                                    <i class="bi bi-pencil me-2"></i>
-
-                                                    Edit
-
-                                                </a>
-
-                                            </li>
 
 
-                                            <li>
+                                            <ul class="dropdown-menu dropdown-menu-end">
 
-                                                <hr class="dropdown-divider">
+                                                <li>
 
-                                            </li>
+                                                    <a
+                                                        class="dropdown-item"
+                                                        href="${row.show_url}"
+                                                    >
+
+                                                        <i class="bi bi-eye me-2"></i>
+
+                                                        View
+
+                                                    </a>
+
+                                                </li>
 
 
-                                            <li>
+                                                <li>
 
-                                                <button
-                                                    type="button"
-                                                    class="dropdown-item text-danger delete-patient"
-                                                    data-id="${row.id}"
-                                                >
+                                                    <a
+                                                        class="dropdown-item"
+                                                        href="${row.edit_url}"
+                                                    >
 
-                                                    <i class="bi bi-trash me-2"></i>
+                                                        <i class="bi bi-pencil me-2"></i>
 
-                                                    Delete
+                                                        Edit
 
-                                                </button>
+                                                    </a>
 
-                                            </li>
+                                                </li>
 
-                                        </ul>
 
-                                    </div>
+                                                <li>
 
-                                `;
+                                                    <hr class="dropdown-divider">
+
+                                                </li>
+
+
+                                                <li>
+
+                                                    <button
+                                                        type="button"
+                                                        class="dropdown-item text-danger delete-patient"
+                                                        data-id="${row.id}"
+                                                    >
+
+                                                        <i class="bi bi-trash me-2"></i>
+
+                                                        Delete
+
+                                                    </button>
+
+                                                </li>
+
+                                            </ul>
+
+                                        </div>
+
+                                    `;
 
                         }
 
                     }
+
+
 
                 ],
 
@@ -493,10 +500,10 @@
                 language: {
 
                     processing: `
-                            <div class="spinner-border"
-                                 role="status">
-                            </div>
-                        `,
+                                <div class="spinner-border"
+                                     role="status">
+                                </div>
+                            `,
 
                     emptyTable:
                         "No patients found.",
@@ -581,4 +588,4 @@
 
     </script>
 
-@endsection
+@endpush

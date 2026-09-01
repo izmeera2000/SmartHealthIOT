@@ -2,235 +2,440 @@
 
 @section('content')
 
-<section class="section">
+    <section class="section">
 
-    {{-- HEADER --}}
-    <div class="card">
-        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+        {{-- ========================================================== --}}
+        {{-- HEADER --}}
+        {{-- ========================================================== --}}
 
-            <div>
-                <h5 class="card-title mb-1">
-                    Devices
-                </h5>
+        <div class="card">
 
-                <small class="text-muted">
-                    Manage your registered ESP32 devices
-                </small>
-            </div>
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
 
-            <a href="{{ route('doctor.devices.create') }}"
-               class="btn btn-primary">
-                <i class="bi bi-plus-lg"></i>
-                Register Device
-            </a>
+                <div>
 
-        </div>
+                    <h5 class="card-title mb-1">
+                        Devices
+                    </h5>
 
-        <div class="card-body">
+                    <small class="text-muted">
+                        Manage your registered ESP32 devices
+                    </small>
 
-            {{-- SUCCESS MESSAGE --}}
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show">
-                    {{ session('success') }}
-
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="alert"></button>
                 </div>
-            @endif
 
-            <div class="table-responsive">
 
-                <table class="table table-hover align-middle">
+                <a href="{{ route('doctor.devices.create') }}" class="btn btn-primary">
 
-                    <thead>
-                        <tr>
-                            <th>Device</th>
-                            <th>Device UID</th>
-                            <th>Patient</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Last Seen</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
+                    <i class="bi bi-plus-lg me-1"></i>
 
-                    <tbody>
+                    Register Device
 
-                        @forelse($devices as $device)
+                </a>
+
+            </div>
+
+
+            <div class="card-body">
+
+                {{-- ========================================================== --}}
+                {{-- SUCCESS MESSAGE --}}
+                {{-- ========================================================== --}}
+
+                @if(session('success'))
+
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+
+                        <i class="bi bi-check-circle me-1"></i>
+
+                        {{ session('success') }}
+
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+
+                    </div>
+
+                @endif
+
+
+                {{-- ========================================================== --}}
+                {{-- DATATABLE --}}
+                {{-- ========================================================== --}}
+
+                <div class="table-responsive">
+
+                    <table id="devicesTable" class="table table-hover align-middle w-100">
+
+                        <thead>
 
                             <tr>
 
-                                {{-- DEVICE --}}
-                                <td>
-                                    <div class="fw-semibold">
-                                        {{ $device->device_name ?: 'Unnamed Device' }}
-                                    </div>
+                                <th>
+                                    Device
+                                </th>
 
-                                    <small class="text-muted">
-                                        {{ $device->mac_address }}
-                                    </small>
-                                </td>
+                                <th>
+                                    Device UID
+                                </th>
 
-                                {{-- UID --}}
-                                <td>
-                                    <code>
-                                        {{ $device->device_uid }}
-                                    </code>
-                                </td>
+                                <th>
+                                    Patient
+                                </th>
 
-                                {{-- PATIENT --}}
-                                <td>
+                                <th>
+                                    Type
+                                </th>
 
-                                    @if($device->patient && $device->patient->user)
+                                <th>
+                                    Status
+                                </th>
 
-                                        <div class="fw-semibold">
-                                            {{ $device->patient->user->name }}
-                                        </div>
+                                <th>
+                                    Last Seen
+                                </th>
 
-                                        <small class="text-muted">
-                                            Patient
-                                        </small>
-
-                                    @else
-
-                                        <span class="text-muted">
-                                            Unassigned
-                                        </span>
-
-                                    @endif
-
-                                </td>
-
-                                {{-- TYPE --}}
-                                <td>
-                                    {{ $device->device_type ?: '-' }}
-                                </td>
-
-                                {{-- STATUS --}}
-                                <td>
-
-                                    @if($device->status === 'active')
-
-                                        <span class="badge bg-success">
-                                            Active
-                                        </span>
-
-                                    @else
-
-                                        <span class="badge bg-secondary">
-                                            Inactive
-                                        </span>
-
-                                    @endif
-
-                                </td>
-
-                                {{-- LAST SEEN --}}
-                                <td>
-
-                                    @if($device->last_seen_at)
-
-                                        <span title="{{ $device->last_seen_at }}">
-                                            {{ $device->last_seen_at->diffForHumans() }}
-                                        </span>
-
-                                    @else
-
-                                        <span class="text-muted">
-                                            Never
-                                        </span>
-
-                                    @endif
-
-                                </td>
-
-                                {{-- ACTIONS --}}
-                                <td class="text-end">
-
-                                    <div class="btn-group">
-
-                                        <a href="{{ route('doctor.devices.show', $device) }}"
-                                           class="btn btn-sm btn-outline-primary"
-                                           title="View Device">
-
-                                            <i class="bi bi-eye"></i>
-
-                                        </a>
-{{-- 
-                                        <a href="{{ route('doctor.devices.readings', $device) }}"
-                                           class="btn btn-sm btn-outline-success"
-                                           title="View Readings">
-
-                                            <i class="bi bi-activity"></i>
-
-                                        </a> --}}
-
-                                        <form action="{{ route('doctor.devices.destroy', $device) }}"
-                                              method="POST"
-                                              class="d-inline"
-                                              onsubmit="return confirm('Delete this device?');">
-
-                                            @csrf
-                                            @method('DELETE')
-
-                                            <button type="submit"
-                                                    class="btn btn-sm btn-outline-danger"
-                                                    title="Delete">
-
-                                                <i class="bi bi-trash"></i>
-
-                                            </button>
-
-                                        </form>
-
-                                    </div>
-
-                                </td>
+                                <th class="text-end">
+                                    Actions
+                                </th>
 
                             </tr>
 
-                        @empty
+                        </thead>
 
-                            <tr>
-                                <td colspan="7"
-                                    class="text-center py-5">
+                        <tbody>
+                        </tbody>
 
-                                    <div class="mb-3">
-                                        <i class="bi bi-cpu fs-1 text-muted"></i>
-                                    </div>
+                    </table>
 
-                                    <h6>
-                                        No devices registered
-                                    </h6>
-
-                                    <p class="text-muted mb-3">
-                                        Register an ESP32 device to start monitoring sensor readings.
-                                    </p>
-
-                                    <a href="{{ route('doctor.devices.create') }}"
-                                       class="btn btn-primary">
-
-                                        <i class="bi bi-plus-lg"></i>
-                                        Register Device
-
-                                    </a>
-
-                                </td>
-                            </tr>
-
-                        @endforelse
-
-                    </tbody>
-
-                </table>
+                </div>
 
             </div>
 
         </div>
-    </div>
 
-</section>
+    </section>
 
 @endsection
- 
+
+
+@push('scripts')
+
+    <script>
+
+        $(document).ready(function () {
+
+        
+
+
+            $('#devicesTable').DataTable({
+
+                processing: true,
+
+                serverSide: true,
+
+                responsive: true,
+
+                ajax: {
+                    url: "{{ route('doctor.devices.data') }}",
+                    type: "GET"
+                },
+
+                pageLength: 10,
+
+                lengthMenu: [
+                    [10, 25, 50, 100],
+                    [10, 25, 50, 100]
+                ],
+
+                order: [
+                    [0, 'desc']
+                ],
+
+                columns: [
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Device
+                    |--------------------------------------------------------------------------
+                    */
+
+                    {
+                        data: 'device_name',
+                        name: 'device_name',
+
+                        render: function (data, type, row) {
+
+                            return `
+                            <div class="fw-semibold">
+                                ${data ?? 'Unnamed Device'}
+                            </div>
+
+                            <small class="text-muted">
+                                ${row.mac_address ?? '-'}
+                            </small>
+                        `;
+                        }
+                    },
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Device UID
+                    |--------------------------------------------------------------------------
+                    */
+
+                    {
+                        data: 'device_uid',
+                        name: 'device_uid',
+
+                        render: function (data) {
+
+                            return `
+                            <code>
+                                ${data ?? '-'}
+                            </code>
+                        `;
+                        }
+                    },
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Patient
+                    |--------------------------------------------------------------------------
+                    */
+
+                    {
+                        data: 'patient',
+                        name: 'patient',
+
+                        orderable: false,
+
+                        render: function (data) {
+
+                            if (!data) {
+
+                                return `
+                                <span class="text-muted">
+                                    Unassigned
+                                </span>
+                            `;
+                            }
+
+                            return `
+                            <div class="fw-semibold">
+                                ${data.name}
+                            </div>
+
+                            <small class="text-muted">
+                                ${data.patient_id ?? 'Patient'}
+                            </small>
+                        `;
+                        }
+                    },
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Type
+                    |--------------------------------------------------------------------------
+                    */
+
+                    {
+                        data: 'device_type',
+                        name: 'device_type'
+                    },
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Status
+                    |--------------------------------------------------------------------------
+                    */
+
+                    {
+                        data: 'status',
+                        name: 'status',
+
+                        render: function (data) {
+
+                            if (data === 'active') {
+
+                                return `
+                                <span class="badge bg-success">
+                                    Active
+                                </span>
+                            `;
+                            }
+
+                            return `
+                            <span class="badge bg-secondary">
+                                Inactive
+                            </span>
+                        `;
+                        }
+                    },
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Last Seen
+                    |--------------------------------------------------------------------------
+                    */
+
+                    {
+                        data: 'last_seen_at',
+                        name: 'last_seen_at',
+
+                        render: function (data, type, row) {
+
+                            if (!data) {
+
+                                return `
+                                <span class="text-muted">
+                                    Never
+                                </span>
+                            `;
+                            }
+
+                            return `
+                            <span title="${row.last_seen_full ?? ''}">
+                                ${data}
+                            </span>
+                        `;
+                        }
+                    },
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Actions
+                    |--------------------------------------------------------------------------
+                    */
+
+                    {
+                        data: null,
+
+                        orderable: false,
+
+                        searchable: false,
+
+                        className: 'text-end',
+
+                        render: function (data, type, row) {
+
+                            return `
+
+                <div class="dropdown">
+
+                    <button
+                        class="btn btn-sm btn-light"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                    >
+
+                        <i class="bi bi-three-dots-vertical"></i>
+
+                    </button>
+
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+
+                        {{-- View --}}
+
+                        <li>
+
+                            <a
+                                class="dropdown-item"
+                                href="${row.show_url}"
+                            >
+
+                                <i class="bi bi-eye me-2"></i>
+
+                                View
+
+                            </a>
+
+                        </li>
+
+
+                        {{-- Edit --}}
+
+                        <li>
+
+                            <a
+                                class="dropdown-item"
+                                href="${row.edit_url}"
+                            >
+
+                                <i class="bi bi-pencil me-2"></i>
+
+                                Edit
+
+                            </a>
+
+                        </li>
+
+
+                        {{-- Divider --}}
+
+                        <li>
+
+                            <hr class="dropdown-divider">
+
+                        </li>
+
+
+                        {{-- Delete --}}
+
+                        <li>
+
+                            <button
+                                type="button"
+                                class="dropdown-item text-danger delete-device"
+                                data-id="${row.id}"
+                            >
+
+                                <i class="bi bi-trash me-2"></i>
+
+                                Delete
+
+                            </button>
+
+                        </li>
+
+                    </ul>
+
+                </div>
+
+            `;
+
+                        }
+
+                    },
+
+
+
+
+                ],
+
+                language: {
+
+                    processing:
+                        '<i class="bi bi-hourglass-split me-1"></i> Loading devices...',
+
+                    emptyTable:
+                        'No devices registered',
+
+                    zeroRecords:
+                        'No matching devices found'
+
+                }
+
+            });
+
+        });
+
+    </script>
+
+@endpush

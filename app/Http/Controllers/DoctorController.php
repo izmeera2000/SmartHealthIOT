@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class DoctorController extends Controller
 {
@@ -72,33 +73,33 @@ class DoctorController extends Controller
                     "%{$search}%"
                 )
 
-                ->orWhere(
-                    'specialization',
-                    'like',
-                    "%{$search}%"
-                )
-
-                ->orWhere(
-                    'phone',
-                    'like',
-                    "%{$search}%"
-                )
-
-                ->orWhereHas('user', function ($query) use ($search) {
-
-                    $query->where(
-                        'name',
+                    ->orWhere(
+                        'specialization',
                         'like',
                         "%{$search}%"
                     )
 
                     ->orWhere(
-                        'email',
+                        'phone',
                         'like',
                         "%{$search}%"
-                    );
+                    )
 
-                });
+                    ->orWhereHas('user', function ($query) use ($search) {
+
+                        $query->where(
+                            'name',
+                            'like',
+                            "%{$search}%"
+                        )
+
+                            ->orWhere(
+                                'email',
+                                'like',
+                                "%{$search}%"
+                            );
+
+                    });
 
             });
         }
@@ -160,8 +161,8 @@ class DoctorController extends Controller
                 $orderDirection,
                 ['asc', 'desc']
             )
-                ? $orderDirection
-                : 'desc';
+            ? $orderDirection
+            : 'desc';
 
 
         /*
@@ -218,6 +219,10 @@ class DoctorController extends Controller
 
             return [
 
+
+                'profile_photo' => $doctor->user->profile_photo
+                    ? asset('storage/' . $doctor->user->profile_photo)
+                    : null,
                 'id' =>
                     $doctor->id,
 
@@ -238,8 +243,8 @@ class DoctorController extends Controller
 
                 'created_at' =>
                     $doctor->created_at
-                        ? $doctor->created_at->format('d M Y')
-                        : null,
+                    ? $doctor->created_at->format('d M Y')
+                    : null,
 
                 'show_url' =>
                     route(
@@ -366,62 +371,89 @@ class DoctorController extends Controller
                 'max:255',
             ],
 
+            'profile_photo' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:2048',
+            ],
+
         ]);
 
+        $profilePhoto = null;
 
-        DB::transaction(function () use ($validated) {
+        if ($request->hasFile('profile_photo')) {
+            $profilePhoto = $request
+                ->file('profile_photo')
+                ->store('profile-photos/doctors', 'public');
+        }
+        try {
+            DB::transaction(function () use ($validated, $profilePhoto) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | Create User
-            |--------------------------------------------------------------------------
-            */
+                /*
+                |--------------------------------------------------------------------------
+                | Create User
+                |--------------------------------------------------------------------------
+                */
 
-            $user = User::create([
+                $user = User::create([
 
-                'name' =>
-                    $validated['first_name']
-                    . ' '
-                    . $validated['last_name'],
+                    'name' =>
+                        $validated['first_name']
+                        . ' '
+                        . $validated['last_name'],
 
-                'email' =>
-                    $validated['email'],
+                    'email' =>
+                        $validated['email'],
 
-                'password' =>
-                    Hash::make(
-                        $validated['password']
-                    ),
+                    'password' =>
+                        Hash::make(
+                            $validated['password']
+                        ),
 
-            ]);
+                        
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | Create Doctor
-            |--------------------------------------------------------------------------
-            */
-
-            Doctor::create([
-
-                'user_id' =>
-                    $user->id,
-
-                'doctor_id' =>
-                    $validated['doctor_id'],
-
-                'specialization' =>
-                    $validated['specialization']
-                    ?? null,
-
-                'phone' =>
-                    $validated['phone']
-                    ?? null,
-
-            ]);
-
-        });
+                    'profile_photo' =>
+                        $profilePhoto,
+                ]);
 
 
+                /*
+                |--------------------------------------------------------------------------
+                | Create Doctor
+                |--------------------------------------------------------------------------
+                */
+
+                Doctor::create([
+
+                    'user_id' =>
+                        $user->id,
+
+                    'doctor_id' =>
+                        $validated['doctor_id'],
+
+                    'specialization' =>
+                        $validated['specialization']
+                        ?? null,
+
+                    'phone' =>
+                        $validated['phone']
+                        ?? null,
+
+
+                ]);
+
+            });
+
+        } catch (\Throwable $e) {
+
+            // Remove uploaded image if database operation fails
+            if ($profilePhoto) {
+                Storage::disk('public')->delete($profilePhoto);
+            }
+
+            throw $e;
+        }
         return redirect()
 
             ->route(
@@ -463,6 +495,18 @@ class DoctorController extends Controller
                     'url' =>
                         route(
                             'doctor.doctors.index'
+                        ),
+                ],
+
+                
+                [
+                    'title' =>
+                       $doctor->id,
+
+                    'url' =>
+                        route(
+                            'doctor.doctors.show',
+                            $doctor
                         ),
                 ],
 
@@ -527,59 +571,99 @@ class DoctorController extends Controller
     */
 
     public function update(
-        Request $request,
-        Doctor $doctor
-    ) {
+    Request $request,
+    Doctor $doctor
+) {
+    $doctor->load('user');
 
-        $doctor->load('user');
+    $validated = $request->validate([
+        'first_name' => [
+            'required',
+            'string',
+            'max:255',
+        ],
+
+        'last_name' => [
+            'required',
+            'string',
+            'max:255',
+        ],
+
+        'email' => [
+            'required',
+            'email',
+            'unique:users,email,' . $doctor->user_id,
+        ],
+
+        'doctor_id' => [
+            'required',
+            'string',
+            'unique:doctors,doctor_id,' . $doctor->id,
+        ],
+
+        'specialization' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'phone' => [
+            'nullable',
+            'string',
+            'max:255',
+        ],
+
+        'profile_photo' => [
+            'nullable',
+            'image',
+            'mimes:jpg,jpeg,png,webp',
+            'max:2048',
+        ],
+
+        'remove_profile_photo' => [
+            'nullable',
+            'boolean',
+        ],
+    ]);
+
+    $user = $doctor->user;
+
+    // Store the old photo path from USERS table
+    $oldPhoto = $user->profile_photo;
+
+    $newPhoto = null;
+
+    try {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Upload new profile photo
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->hasFile('profile_photo')) {
+
+            $newPhoto = $request
+                ->file('profile_photo')
+                ->store(
+                    'profile-photos/doctors',
+                    'public'
+                );
+        }
 
 
-        $validated = $request->validate([
-
-            'first_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'last_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'email' => [
-                'required',
-                'email',
-                'unique:users,email,'
-                . $doctor->user_id,
-            ],
-
-            'doctor_id' => [
-                'required',
-                'string',
-                'unique:doctors,doctor_id,'
-                . $doctor->id,
-            ],
-
-            'specialization' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'phone' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-        ]);
-
+        /*
+        |--------------------------------------------------------------------------
+        | Update database
+        |--------------------------------------------------------------------------
+        */
 
         DB::transaction(function () use (
             $validated,
-            $doctor
+            $doctor,
+            $user,
+            $newPhoto,
+            $request
         ) {
 
             /*
@@ -588,8 +672,7 @@ class DoctorController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            $doctor->user->update([
-
+            $user->update([
                 'name' =>
                     $validated['first_name']
                     . ' '
@@ -597,7 +680,40 @@ class DoctorController extends Controller
 
                 'email' =>
                     $validated['email'],
+            ]);
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Profile Photo
+            |--------------------------------------------------------------------------
+            */
+
+            $photo = $user->profile_photo;
+
+
+            // New photo uploaded
+            if ($newPhoto) {
+                $photo = $newPhoto;
+            }
+
+
+            // User removed photo
+            if (
+                $request->boolean('remove_profile_photo')
+            ) {
+                $photo = null;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Save profile photo to USERS table
+            |--------------------------------------------------------------------------
+            */
+
+            $user->update([
+                'profile_photo' => $photo,
             ]);
 
 
@@ -608,35 +724,57 @@ class DoctorController extends Controller
             */
 
             $doctor->update([
-
                 'doctor_id' =>
                     $validated['doctor_id'],
 
                 'specialization' =>
-                    $validated['specialization']
-                    ?? null,
+                    $validated['specialization'] ?? null,
 
                 'phone' =>
-                    $validated['phone']
-                    ?? null,
-
+                    $validated['phone'] ?? null,
             ]);
-
         });
 
 
-        return redirect()
+        /*
+        |--------------------------------------------------------------------------
+        | Delete old photo
+        |--------------------------------------------------------------------------
+        */
 
-            ->route(
-                'doctor.doctors.edit',
-                $doctor
-            )
+        if (
+            ($newPhoto || $request->boolean('remove_profile_photo'))
+            && $oldPhoto
+        ) {
+            Storage::disk('public')->delete($oldPhoto);
+        }
 
-            ->with(
-                'success',
-                'Doctor updated successfully.'
-            );
+    } catch (\Throwable $e) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Delete newly uploaded photo if database update fails
+        |--------------------------------------------------------------------------
+        */
+
+        if ($newPhoto) {
+            Storage::disk('public')->delete($newPhoto);
+        }
+
+        throw $e;
     }
+
+
+    return redirect()
+        ->route(
+            'doctor.doctors.show',
+            $doctor
+        )
+        ->with(
+            'success',
+            'Doctor updated successfully.'
+        );
+}
 
 
     /*
@@ -650,10 +788,7 @@ class DoctorController extends Controller
         $user = $doctor->user;
 
 
-        DB::transaction(function () use (
-            $doctor,
-            $user
-        ) {
+        DB::transaction(function () use ($doctor, $user) {
 
             /*
             |--------------------------------------------------------------------------
@@ -691,4 +826,3 @@ class DoctorController extends Controller
             );
     }
 }
- 

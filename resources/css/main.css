@@ -6848,7 +6848,7 @@ textarea.form-control {
 .toast-header .btn-close {
   margin-left: auto;
   padding: var(--spacing-xs);
-  background: transparent;
+  /* background: transparent; */
   border: none;
   opacity: 0.5;
   cursor: pointer;

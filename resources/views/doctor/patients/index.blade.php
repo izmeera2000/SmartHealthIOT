@@ -93,6 +93,7 @@
 
 
 @push('scripts')
+<script src="{{ asset('vendors/datatables/datatables.js') }}"></script>
 
     <script>
 

@@ -13,8 +13,7 @@
 <script src="{{ asset('vendors/tinymce/tinymce.min.js') }}"></script>
 <script src="{{ asset('vendors/choices.js/choices.min.js') }}"></script>
 <script src="{{ asset('vendors/flatpickr/flatpickr.min.js') }}"></script>
-<script src="{{ asset('vendors/php-email-form/validate.js') }}"></script>
-<script src="{{ asset('vendors/datatables/datatables.js') }}"></script>
+{{-- <script src="{{ asset('vendors/php-email-form/validate.js') }}"></script> --}}
 
 
 <!-- =========================================
@@ -36,48 +35,192 @@
      Pusher Channels
 ========================================= -->
 
-<script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
-
+ 
+<script src="{{ asset('vendors/pusher/pusher.min.js') }}"></script>
+ 
 
 <script>
     /*
     |--------------------------------------------------------------------------
-    | Push Notification Toast
+    | Pusher Real-Time Notification Toast
+    |--------------------------------------------------------------------------
+    |
+    | This is ONLY for real-time notifications received through
+    | Pusher Channels.
+    |
+    | Normal Laravel success/error messages are handled by the
+    | Blade session toast in the layout.
+    |
     |--------------------------------------------------------------------------
     */
 
-    function showPushToast(title, message) {
+    function showNotificationToast(
+        title,
+        message,
+        options = {}
+    ) {
 
         const toastElement = document.getElementById(
-            'pushNotificationToast'
+            'channelNotificationToast'
         );
 
         const titleElement = document.getElementById(
-            'pushToastTitle'
+            'channelToastTitle'
         );
 
         const messageElement = document.getElementById(
-            'pushToastMessage'
+            'channelToastMessage'
         );
 
-        if (!toastElement || !titleElement || !messageElement) {
+        const iconElement = document.getElementById(
+            'channelToastIcon'
+        );
+
+        const timeElement = document.getElementById(
+            'channelToastTime'
+        );
+
+        const actionsElement = document.getElementById(
+            'channelToastActions'
+        );
+
+        const actionButton = document.getElementById(
+            'channelToastActionButton'
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check Elements
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            !toastElement ||
+            !titleElement ||
+            !messageElement
+        ) {
 
             console.error(
-                '❌ Push notification toast elements not found.'
+                '❌ Pusher notification toast elements not found.'
             );
 
             return;
         }
 
-        titleElement.textContent = title;
-        messageElement.textContent = message;
 
-        const toast = bootstrap.Toast.getOrCreateInstance(
-            toastElement,
-            {
-                delay: 5000
+        /*
+        |--------------------------------------------------------------------------
+        | Content
+        |--------------------------------------------------------------------------
+        */
+
+        titleElement.textContent =
+            title || 'Notification';
+
+        messageElement.textContent =
+            message || 'You have a new notification.';
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Icon
+        |--------------------------------------------------------------------------
+        */
+
+        if (iconElement) {
+
+            iconElement.className =
+                `bi ${options.icon || 'bi-bell-fill'} me-2`;
+
+
+            /*
+            | Remove previous colors
+            */
+
+            iconElement.classList.remove(
+                'text-primary',
+                'text-success',
+                'text-warning',
+                'text-danger'
+            );
+
+
+            /*
+            | Add current color
+            */
+
+            iconElement.classList.add(
+                options.color || 'text-primary'
+            );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Time
+        |--------------------------------------------------------------------------
+        */
+
+        if (timeElement) {
+
+            timeElement.textContent =
+                options.time || 'just now';
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Action Button
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            actionsElement &&
+            actionButton
+        ) {
+
+            if (
+                options.actionUrl &&
+                options.actionText
+            ) {
+
+                actionButton.href =
+                    options.actionUrl;
+
+                actionButton.innerHTML =
+                    `<i class="bi bi-eye me-1"></i> ${options.actionText}`;
+
+                actionsElement.style.setProperty(
+                    'display',
+                    'flex',
+                    'important'
+                );
+
+            } else {
+
+                actionsElement.style.setProperty(
+                    'display',
+                    'none',
+                    'important'
+                );
             }
-        );
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Show Toast
+        |--------------------------------------------------------------------------
+        */
+
+        const toast =
+            bootstrap.Toast.getOrCreateInstance(
+                toastElement,
+                {
+                    delay: 5000
+                }
+            );
 
         toast.show();
     }
@@ -85,11 +228,12 @@
 
     /*
     |--------------------------------------------------------------------------
-    | Pusher Channels
+    | PUSHER CHANNELS
     |--------------------------------------------------------------------------
     */
 
     Pusher.logToConsole = true;
+
 
     const pusher = new Pusher(
         '{{ config('broadcasting.connections.pusher.key') }}',
@@ -106,13 +250,16 @@
     |--------------------------------------------------------------------------
     */
 
-    pusher.connection.bind('connected', function () {
+    pusher.connection.bind(
+        'connected',
+        function () {
 
-        console.log(
-            '✅ Pusher Channels connected'
-        );
+            console.log(
+                '✅ Pusher Channels connected'
+            );
 
-    });
+        }
+    );
 
 
     /*
@@ -121,14 +268,17 @@
     |--------------------------------------------------------------------------
     */
 
-    pusher.connection.bind('error', function (error) {
+    pusher.connection.bind(
+        'error',
+        function (error) {
 
-        console.error(
-            '❌ Pusher Channels error:',
-            error
-        );
+            console.error(
+                '❌ Pusher Channels error:',
+                error
+            );
 
-    });
+        }
+    );
 
 
     /*
@@ -137,19 +287,23 @@
     |--------------------------------------------------------------------------
     */
 
-    const channelName = 'doctor.{{ auth()->id() }}';
+    const channelName =
+        'doctor.{{ auth()->id() }}';
+
 
     console.log(
         '📡 Subscribing to:',
         channelName
     );
 
-    const channel = pusher.subscribe(channelName);
+
+    const channel =
+        pusher.subscribe(channelName);
 
 
     /*
     |--------------------------------------------------------------------------
-    | Channel Subscription Success
+    | Channel Subscription
     |--------------------------------------------------------------------------
     */
 
@@ -166,11 +320,9 @@
     );
 
 
-
-
     /*
     |--------------------------------------------------------------------------
-    | Test Notification
+    | TEST NOTIFICATION
     |--------------------------------------------------------------------------
     */
 
@@ -183,9 +335,14 @@
                 data
             );
 
-            showPushToast(
+
+            showNotificationToast(
                 data.title,
-                data.message
+                data.message,
+                {
+                    icon: 'bi-bell-fill',
+                    color: 'text-primary'
+                }
             );
 
         }

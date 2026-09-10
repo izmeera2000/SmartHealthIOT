@@ -1,3 +1,5 @@
+ 
+
 <!-- Header -->
 <header class="header">
   <!-- Header Left -->
@@ -35,65 +37,163 @@
         <i class="bi bi-fullscreen-exit icon-exit"></i>
       </button>
 
-      <!-- Notifications -->
+       <!-- Notifications -->
       <div class="header-action dropdown notification-dropdown">
+
         <button class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+
           <i class="bi bi-bell"></i>
-          <span class="badge">3</span>
+
+          @if($headerUnreadCount > 0)
+            <span class="badge">
+              {{ $headerUnreadCount > 99 ? '99+' : $headerUnreadCount }}
+            </span>
+          @endif
+
         </button>
+
+
         <div class="dropdown-menu dropdown-menu-end">
+
           <div class="notification-header">
-            <h6>Notifications</h6>
-            <a href="blank.html#" data-notification-action="mark-all-read">Mark all read</a>
+
+            <div>
+              <h6 class="mb-0">
+                Notifications
+              </h6>
+
+              @if($headerUnreadCount > 0)
+                <small class="text-muted">
+                  {{ $headerUnreadCount }} unread
+                </small>
+              @endif
+            </div>
+
+
+            @if($headerUnreadCount > 0)
+
+              <form method="POST" action="{{ route('notifications.readAll') }}">
+
+                @csrf
+
+                <button type="submit" class="btn btn-link btn-sm p-0">
+
+                  Mark all read
+
+                </button>
+
+              </form>
+
+            @endif
+
           </div>
+
+
           <div class="notification-list">
-            <div class="notification-item unread">
-              <div class="notification-icon success">
-                <i class="bi bi-check-circle"></i>
+
+            @forelse($headerNotifications as $notification)
+
+              @php
+                $data = $notification->data;
+
+                $icon = $data['icon'] ?? 'bell';
+
+                $iconType = $data['icon_type'] ?? 'info';
+
+                $iconClasses = [
+                  'success' => 'success',
+                  'warning' => 'warning',
+                  'danger' => 'danger',
+                  'info' => 'info',
+                  'primary' => 'primary',
+                ];
+
+                $iconClass = $iconClasses[$iconType] ?? 'info';
+              @endphp
+
+
+              <div class="notification-item
+                      {{ is_null($notification->read_at) ? 'unread' : '' }}">
+
+                <div class="notification-icon {{ $iconClass }}">
+
+                  <i class="bi bi-{{ $icon }}"></i>
+
+                </div>
+
+
+                <div class="notification-content">
+
+                  <div class="notification-title">
+
+                    {{ $data['title'] ?? 'Notification' }}
+
+                  </div>
+
+
+                  <div class="notification-text">
+
+                    {{ $data['message'] ?? '' }}
+
+                  </div>
+
+
+                  <div class="notification-time">
+
+                    {{ $notification->created_at->diffForHumans() }}
+
+                  </div>
+
+                </div>
+
               </div>
-              <div class="notification-content">
-                <div class="notification-title">Order Completed</div>
-                <div class="notification-text">Your order #12345 has been delivered</div>
-                <div class="notification-time">5 min ago</div>
+
+            @empty
+
+              <div class="text-center py-4">
+
+                <i class="bi bi-bell-slash fs-3 text-muted"></i>
+
+                <div class="mt-2 text-muted">
+                  No notifications
+                </div>
+
               </div>
-            </div>
-            <div class="notification-item unread">
-              <div class="notification-icon warning">
-                <i class="bi bi-exclamation-triangle"></i>
-              </div>
-              <div class="notification-content">
-                <div class="notification-title">Low Storage</div>
-                <div class="notification-text">Server storage is running low (85% used)</div>
-                <div class="notification-time">1 hour ago</div>
-              </div>
-            </div>
-            <div class="notification-item">
-              <div class="notification-icon info">
-                <i class="bi bi-info-circle"></i>
-              </div>
-              <div class="notification-content">
-                <div class="notification-title">New Feature</div>
-                <div class="notification-text">Dark mode is now available</div>
-                <div class="notification-time">2 hours ago</div>
-              </div>
-            </div>
+
+            @endforelse
+
           </div>
+
+
           <div class="notification-footer">
-            <a href="notifications.html">View all notifications</a>
+
+            <a href="{{ route('notifications.index') }}">
+              View all notifications
+            </a>
+
           </div>
+
         </div>
+
       </div>
 
       <!-- User Dropdown - shadcn style -->
       <div class="header-action dropdown user-dropdown">
         <button class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-          <img src="assets/img/profile-img.webp" alt="User" class="avatar">
+          {{-- <img src="{{ asset('assets/img/profile-img.webp') }}" alt="User" class="avatar"> --}}
+
+          <img src="{{ auth()->user()->profile_photo
+  ? asset('storage/' . auth()->user()->profile_photo)
+  : asset('assets/img/profile-img.webp') }}" alt="{{ auth()->user()->name ?? 'User' }}" class="avatar">
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
           <li class="dropdown-header">
-            <img src="assets/img/profile-img.webp" alt="User" class="user-avatar">
+            {{-- <img src="{{ asset('assets/img/profile-img.webp') }}" alt="User" class="user-avatar"> --}}
+            <img src="{{ auth()->user()->profile_photo
+  ? asset('storage/' . auth()->user()->profile_photo)
+  : asset('assets/img/profile-img.webp') }}" alt="{{ auth()->user()->name ?? 'User' }}" class="user-avatar">
             <div class="user-info">
-              <h6>John Doe</h6>
+              <h6>{{ auth()->user()->name ?? 'User' }}</h6>
               {{-- <span><a href="https://bootstrapmade.com/cdn-cgi/l/email-protection" class="__cf_email__"
                   data-cfemail="3b515453557b5e435a564b575e15585456">[email&#160;protected]</a></span> --}}
             </div>
@@ -156,10 +256,10 @@
 
 <!-- Mobile Search -->
 <div class="mobile-search">
-  <form class="search-form" action="search-results.html" method="GET">
+  {{-- <form class="search-form" action="search-results.html" method="GET">
     <input type="search" name="q" placeholder="Search..." autocomplete="off">
     <button type="submit"><i class="bi bi-search"></i></button>
-  </form>
+  </form> --}}
 </div>
 
 <!-- Mobile Header Menu -->
@@ -180,12 +280,22 @@
     </button>
 
     <!-- Notifications -->
-    <a href="notifications.html" class="mobile-menu-item">
-      <i class="bi bi-bell"></i>
-      <span class="badge">3</span>
-      <span class="mobile-menu-label">Notifications</span>
-    </a>
+   <a href="{{ route('notifications.index') }}"
+   class="mobile-menu-item">
 
+    <i class="bi bi-bell"></i>
+
+    @if($headerUnreadCount > 0)
+        <span class="badge">
+            {{ $headerUnreadCount > 99 ? '99+' : $headerUnreadCount }}
+        </span>
+    @endif
+
+    <span class="mobile-menu-label">
+        Notifications
+    </span>
+
+</a>
     <!-- Profile -->
     <a href="profile.html" class="mobile-menu-item">
       <i class="bi bi-person"></i>

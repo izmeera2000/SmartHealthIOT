@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use App\Events\PatientRegistered;
-
+use App\Notifications\PatientRegistered as PatientRegisteredNotification;
 
 class PatientController extends Controller
 {
@@ -383,13 +383,16 @@ class PatientController extends Controller
             'weight' => ['nullable', 'numeric'],
         ]);
 
-        DB::transaction(function () use ($validated) {
+        $patient = DB::transaction(function () use ($validated) {
 
             $user = User::create([
                 'name' => $validated['first_name'] . ' ' . $validated['last_name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
             ]);
+
+            // Assign patient role
+            $user->assignRole('patient');
 
             $patient = Patient::create([
                 'user_id' => $user->id,
@@ -399,6 +402,7 @@ class PatientController extends Controller
                 'gender' => $validated['gender'] ?? null,
                 'phone' => $validated['phone'] ?? null,
                 'address' => $validated['address'] ?? null,
+
                 'doctor_id' => auth()->id(),
 
                 'emergency_contact_name' =>
@@ -414,8 +418,19 @@ class PatientController extends Controller
                 'height' => $validated['height'] ?? null,
                 'weight' => $validated['weight'] ?? null,
             ]);
-         
+
+            return $patient;
         });
+
+
+        // Notify the currently logged-in doctor
+        auth()->user()->notify(
+            new PatientRegisteredNotification(
+                $patient->user->name,
+                $patient->patient_id
+            )
+        );
+
 
         return redirect()
             ->route('doctor.patients.index')
@@ -436,6 +451,8 @@ class PatientController extends Controller
             'devices',
 
         ]);
+
+
 
         return view('doctor.patients.show', [
             'patient' => $patient,

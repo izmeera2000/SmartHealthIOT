@@ -25,6 +25,8 @@ class Patient extends Model
         'blood_type',
         'height',
         'weight',
+                'profile_photo',
+
     ];
 
     protected function casts(): array

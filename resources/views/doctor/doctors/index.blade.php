@@ -350,6 +350,9 @@
 
 @push('scripts')
 
+<script src="{{ asset('vendors/datatables/datatables.js') }}"></script>
+
+
     <script>
 
         $(document).ready(function () {
@@ -799,28 +802,40 @@
                                     <div class="contact-card-body">
 
 
-                                        <div class="contact-card-avatar">
+                                      <div class="contact-card-avatar">
 
-                                            <div
-                                                class="rounded-circle
-                                                       bg-primary-light
-                                                       text-primary
-                                                       d-flex
-                                                       align-items-center
-                                                       justify-content-center"
-                                                style="
-                                                    width:70px;
-                                                    height:70px;
-                                                    font-size:25px;
-                                                "
-                                            >
+    ${
+        doctor.profile_photo
+            ? `
+                <img
+                    src="${escapeHtml(doctor.profile_photo)}"
+                    alt="${name}"
+                    class="rounded-circle"
+                    width="70"
+                    height="70"
+                    style="object-fit: cover;"
+                >
+            `
+            : `
+                <div
+                    class="rounded-circle
+                           bg-primary-light
+                           text-primary
+                           d-flex
+                           align-items-center
+                           justify-content-center"
+                    style="
+                        width:70px;
+                        height:70px;
+                        font-size:25px;
+                    "
+                >
+                    <i class="bi bi-person-badge"></i>
+                </div>
+            `
+    }
 
-                                                <i class="bi bi-person-badge"></i>
-
-                                            </div>
-
-                                        </div>
-
+</div>
 
                                         <h5 class="contact-card-name">
 

@@ -3,11 +3,12 @@
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DeviceWebController;
 use App\Http\Controllers\DoctorController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\BeamsTestController;
-
+ 
 /*
 |--------------------------------------------------------------------------
 | Public
@@ -248,24 +249,24 @@ Route::middleware('auth')->group(function () {
                 ])->name('store');
 
                 // Show
-                Route::get('/{patient}', [
+                Route::get('/{doctor}', [
                     DoctorController::class,
                     'show'
                 ])->name('show');
 
                 // Edit
-                Route::get('/{patient}/edit', [
+                Route::get('/{doctor}/edit', [
                     DoctorController::class,
                     'edit'
                 ])->name('edit');
 
-                Route::put('/{patient}', [
+                Route::put('/{doctor}', [
                     DoctorController::class,
                     'update'
                 ])->name('update');
 
 
-                Route::delete('/{patient}', [
+                Route::delete('/{doctor}', [
                     DoctorController::class,
                     'destroy'
                 ])->name('destroy');
@@ -308,6 +309,21 @@ Route::middleware('auth')->group(function () {
         ProfileController::class,
         'destroy'
     ])->name('profile.destroy');
+
+        Route::get('/notifications', [
+        NotificationController::class,
+        'index'
+    ])->name('notifications.index');
+
+    Route::post('/notifications/{id}/read', [
+        NotificationController::class,
+        'markAsRead'
+    ])->name('notifications.read');
+
+    Route::post('/notifications/read-all', [
+        NotificationController::class,
+        'markAllAsRead'
+    ])->name('notifications.readAll');
 
 });
 

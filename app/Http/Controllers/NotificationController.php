@@ -22,10 +22,20 @@ class NotificationController extends Controller
             ->unreadNotifications()
             ->count();
 
-        return view('notifications.index', compact(
-            'notifications',
-            'unreadCount'
-        ));
+
+        return view('notifications.index', [
+            'notifications' => $notifications,
+            'unreadCount' => $unreadCount,
+
+            'pageTitle' => 'Notifications',
+
+            'breadcrumbs' => [
+                [
+                    'title' => 'Notifications',
+                    'url' => route('notifications.index'),
+                ],
+            ],
+        ]);
     }
     public function markAsRead(Request $request, string $id)
     {

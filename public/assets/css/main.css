@@ -3222,13 +3222,14 @@ a.header-action:hover {
 }
 
 /* Dashboard Grid */
+
 .dashboard-grid {
   display: grid;
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-xl);
 }
 
-.dashboard-grid>.card {
+.dashboard-grid > .card {
   margin-bottom: 0;
   height: 100%;
 }
@@ -3256,7 +3257,18 @@ a.header-action:hover {
 @media (max-width: 575px) {
 
   .dashboard-grid-2,
-  .dashboard-grid-3,
+  .dashboard-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 424px) {
+
+
   .dashboard-grid-4 {
     grid-template-columns: 1fr;
   }
@@ -6840,7 +6852,7 @@ textarea.form-control {
 .toast-header .btn-close {
   margin-left: auto;
   padding: var(--spacing-xs);
-  background: transparent;
+  /* background: transparent; */
   border: none;
   opacity: 0.5;
   cursor: pointer;

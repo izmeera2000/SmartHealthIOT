@@ -1,30 +1,65 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+<html lang="en" data-theme="dark" data-bs-theme="dark">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ config('app.name', 'Laravel') }}</title>
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="EasyAdmin - Bootstrap Admin Template">
+    <meta name="keywords" content="admin, dashboard, bootstrap">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <!-- Favicons -->
+    <link href="{{ asset('assets/img/favicon.png') }}" rel="icon">
+    <link href="{{ asset('assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
 
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100 dark:bg-gray-900">
-            <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-                </a>
-            </div>
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white dark:bg-gray-800 shadow-md overflow-hidden sm:rounded-lg">
-                {{ $slot }}
-            </div>
-        </div>
-    </body>
+    <!-- Vendor CSS Files -->
+    <link href="{{ asset('vendors/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendors/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendors/remixicon/remixicon.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendors/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendors/phosphor-icons/phosphor-icons.css') }}" rel="stylesheet">
+    {{--
+    <link href="{{ asset('vendors/lucide-icons/lucide.css') }}" rel="stylesheet"> --}}
+    <link href="{{ asset('vendors/simple-datatables/style.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendors/quill/quill.snow.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendors/quill/quill.bubble.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendors/choices.js/choices.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendors/flatpickr/flatpickr.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendors/datatables/datatables.css') }}" rel="stylesheet">
+
+    <!-- Template Main CSS File -->
+    <link href="{{ asset('assets/css/main.css') }}" rel="stylesheet">
+
+
+</head>
+
+<body>
+
+    @yield('content')
+
+
+    <!-- Back to Top -->
+    <a href="#" class="back-to-top">
+        <i class="bi bi-arrow-up"></i>
+    </a>
+
+
+
+
+
+    @include('layouts.scripts')
+
+
+
+    @stack('scripts')
+
+</body>
+
 </html>

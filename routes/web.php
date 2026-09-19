@@ -8,7 +8,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\BeamsTestController;
- 
+use App\Http\Controllers\DashboardController;
+
 /*
 |--------------------------------------------------------------------------
 | Public
@@ -41,26 +42,8 @@ Route::middleware('auth')->group(function () {
     |
     */
 
-    Route::get('/', function () {
-
-        $user = auth()->user();
-
-        if ($user->hasRole('doctor')) {
-            return view('doctor.dashboard');
-        }
-
-        if ($user->hasRole('patient')) {
-            return view('patient.dashboard');
-        }
-
-        // if ($user->hasRole('admin')) {
-        //     return view('admin.dashboard');
-        // }
-
-        abort(403, 'Unauthorized role.');
-
-    })->name('dashboard');
-
+    Route::get('/', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
 
     /*
@@ -152,15 +135,15 @@ Route::middleware('auth')->group(function () {
             ->name('devices.')
             ->group(function () {
 
-          
 
-                       // Page
+
+                // Page
                 Route::get('/', [
                     DeviceWebController::class,
                     'index'
                 ])->name('index');
 
-                
+
 
                 // JSON data for DataTables
                 Route::get('/data', [
@@ -174,7 +157,7 @@ Route::middleware('auth')->group(function () {
                     'create'
                 ])->name('create');
 
-                    
+
 
                 Route::post('/', [
                     DeviceWebController::class,
@@ -199,7 +182,7 @@ Route::middleware('auth')->group(function () {
                 ])->name('update');
 
 
-        Route::get('/{device}/readings', [
+                Route::get('/{device}/readings', [
                     DeviceWebController::class,
                     'readings'
                 ])->name('readings');
@@ -297,6 +280,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/profile', [
         ProfileController::class,
+        'index'
+    ])->name('profile.index');
+
+    Route::get('/profile/edit', [
+        ProfileController::class,
         'edit'
     ])->name('profile.edit');
 
@@ -305,12 +293,17 @@ Route::middleware('auth')->group(function () {
         'update'
     ])->name('profile.update');
 
+
     Route::delete('/profile', [
         ProfileController::class,
         'destroy'
     ])->name('profile.destroy');
 
-        Route::get('/notifications', [
+
+    Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])
+    ->name('profile.password.update');
+
+    Route::get('/notifications', [
         NotificationController::class,
         'index'
     ])->name('notifications.index');
@@ -328,9 +321,39 @@ Route::middleware('auth')->group(function () {
 });
 
 
+Route::get('/speed-test', function () {
+    return 'OK';
+});
+
+Route::prefix('test-errors')->group(function () {
+
+    Route::get('/403', function () {
+        abort(403);
+    });
+
+    Route::get('/404', function () {
+        abort(404);
+    });
+
+ 
+
+    Route::get('/500', function () {
+        abort(500);
+    });
+ 
+
+    // Coming Soon
+    Route::get('/coming-soon', function () {
+        return view('errors.comingsoon');
+    });
+});
 
 
-
+ 
+Route::view('/about', 'pages.about')->name('about');
+Route::view('/privacy', 'pages.privacy')->name('privacy');
+Route::view('/terms', 'pages.terms')->name('terms');
+Route::view('/contact', 'pages.contact')->name('contact');
 /*
 |--------------------------------------------------------------------------
 | Authentication

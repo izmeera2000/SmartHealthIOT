@@ -13,7 +13,8 @@
 <script src="{{ asset('vendors/tinymce/tinymce.min.js') }}"></script>
 <script src="{{ asset('vendors/choices.js/choices.min.js') }}"></script>
 <script src="{{ asset('vendors/flatpickr/flatpickr.min.js') }}"></script>
-{{-- <script src="{{ asset('vendors/php-email-form/validate.js') }}"></script> --}}
+{{--
+<script src="{{ asset('vendors/php-email-form/validate.js') }}"></script> --}}
 
 
 <!-- =========================================
@@ -30,321 +31,202 @@
 
 <script src="{{ asset('assets/js/apps-sidebar-toggle.js') }}"></script>
 
+{{-- ========================================================= Pusher Channels Available for all authenticated users
+========================================================= --}}
+{{-- =========================================================
+Pusher Channels Available for all authenticated users
+========================================================= --}}
 
-<!-- =========================================
-     Pusher Channels
-========================================= -->
+@auth
+    <script src="{{ asset('vendors/pusher/pusher.min.js') }}" defer></script>
 
- 
-<script src="{{ asset('vendors/pusher/pusher.min.js') }}"></script>
- 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
 
-<script>
-    /*
-    |--------------------------------------------------------------------------
-    | Pusher Real-Time Notification Toast
-    |--------------------------------------------------------------------------
-    |
-    | This is ONLY for real-time notifications received through
-    | Pusher Channels.
-    |
-    | Normal Laravel success/error messages are handled by the
-    | Blade session toast in the layout.
-    |
-    |--------------------------------------------------------------------------
-    */
-
-    function showNotificationToast(
-        title,
-        message,
-        options = {}
-    ) {
-
-        const toastElement = document.getElementById(
-            'channelNotificationToast'
-        );
-
-        const titleElement = document.getElementById(
-            'channelToastTitle'
-        );
-
-        const messageElement = document.getElementById(
-            'channelToastMessage'
-        );
-
-        const iconElement = document.getElementById(
-            'channelToastIcon'
-        );
-
-        const timeElement = document.getElementById(
-            'channelToastTime'
-        );
-
-        const actionsElement = document.getElementById(
-            'channelToastActions'
-        );
-
-        const actionButton = document.getElementById(
-            'channelToastActionButton'
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Check Elements
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            !toastElement ||
-            !titleElement ||
-            !messageElement
-        ) {
-
-            console.error(
-                '❌ Pusher notification toast elements not found.'
-            );
-
-            return;
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Content
-        |--------------------------------------------------------------------------
-        */
-
-        titleElement.textContent =
-            title || 'Notification';
-
-        messageElement.textContent =
-            message || 'You have a new notification.';
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Icon
-        |--------------------------------------------------------------------------
-        */
-
-        if (iconElement) {
-
-            iconElement.className =
-                `bi ${options.icon || 'bi-bell-fill'} me-2`;
-
-
-            /*
-            | Remove previous colors
-            */
-
-            iconElement.classList.remove(
-                'text-primary',
-                'text-success',
-                'text-warning',
-                'text-danger'
-            );
-
-
-            /*
-            | Add current color
-            */
-
-            iconElement.classList.add(
-                options.color || 'text-primary'
-            );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Time
-        |--------------------------------------------------------------------------
-        */
-
-        if (timeElement) {
-
-            timeElement.textContent =
-                options.time || 'just now';
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Action Button
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            actionsElement &&
-            actionButton
-        ) {
-
-            if (
-                options.actionUrl &&
-                options.actionText
-            ) {
-
-                actionButton.href =
-                    options.actionUrl;
-
-                actionButton.innerHTML =
-                    `<i class="bi bi-eye me-1"></i> ${options.actionText}`;
-
-                actionsElement.style.setProperty(
-                    'display',
-                    'flex',
-                    'important'
+            /* ---------------------------------------------------------
+             | Notification Toast
+             |---------------------------------------------------------- */
+            function showNotificationToast(data = {}) {
+                const toastElement = document.getElementById(
+                    'channelNotificationToast'
                 );
 
-            } else {
+                if (!toastElement) {
+                    return;
+                }
 
-                actionsElement.style.setProperty(
-                    'display',
-                    'none',
-                    'important'
+                /* ---------------------------------------------------------
+                 | Elements
+                 |---------------------------------------------------------- */
+                const titleElement = document.getElementById(
+                    'channelToastTitle'
                 );
-            }
-        }
 
+                const messageElement = document.getElementById(
+                    'channelToastMessage'
+                );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Show Toast
-        |--------------------------------------------------------------------------
-        */
+                const iconElement = document.getElementById(
+                    'channelToastIcon'
+                );
 
-        const toast =
-            bootstrap.Toast.getOrCreateInstance(
-                toastElement,
-                {
+                const timeElement = document.getElementById(
+                    'channelToastTime'
+                );
+
+                const actionsElement = document.getElementById(
+                    'channelToastActions'
+                );
+
+                const actionButton = document.getElementById(
+                    'channelToastActionButton'
+                );
+
+                /* ---------------------------------------------------------
+                 | Notification Data
+                 |---------------------------------------------------------- */
+                const title = data.title || 'Notification';
+                const message = data.message || 'You have a new notification.';
+                const icon = data.icon || 'bell-fill';
+                const iconType = data.icon_type || 'primary';
+                const url = data.url || null;
+
+                /* ---------------------------------------------------------
+                 | Content
+                 |---------------------------------------------------------- */
+                if (titleElement) {
+                    titleElement.textContent = title;
+                }
+
+                if (messageElement) {
+                    messageElement.textContent = message;
+                }
+
+                /* ---------------------------------------------------------
+                 | Icon
+                 |---------------------------------------------------------- */
+                if (iconElement) {
+                    iconElement.className = `bi bi-${icon} me-2`;
+
+                    iconElement.classList.remove(
+                        'text-primary',
+                        'text-success',
+                        'text-warning',
+                        'text-danger',
+                        'text-info',
+                        'text-secondary'
+                    );
+
+                    iconElement.classList.add(`text-${iconType}`);
+                }
+
+                /* ---------------------------------------------------------
+                 | Time
+                 |---------------------------------------------------------- */
+                if (timeElement) {
+                    timeElement.textContent = 'just now';
+                }
+
+                /* ---------------------------------------------------------
+                 | Action Button
+                 |---------------------------------------------------------- */
+                if (actionsElement && actionButton) {
+                    if (url) {
+                        actionButton.href = url;
+                        actionButton.innerHTML =
+                            '<i class="bi bi-eye me-1"></i> View';
+
+                        actionsElement.style.setProperty(
+                            'display',
+                            'flex',
+                            'important'
+                        );
+                    } else {
+                        actionsElement.style.setProperty(
+                            'display',
+                            'none',
+                            'important'
+                        );
+                    }
+                }
+
+                /* ---------------------------------------------------------
+                 | Show Toast
+                 |---------------------------------------------------------- */
+                bootstrap.Toast.getOrCreateInstance(toastElement, {
                     delay: 5000
-                }
-            );
+                }).show();
+            }
 
-        toast.show();
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | PUSHER CHANNELS
-    |--------------------------------------------------------------------------
-    */
-
-    Pusher.logToConsole = true;
-
-
-    const pusher = new Pusher(
-        '{{ config('broadcasting.connections.pusher.key') }}',
-        {
-            cluster: '{{ config('broadcasting.connections.pusher.options.cluster') }}',
-            forceTLS: true
-        }
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Pusher Connection
-    |--------------------------------------------------------------------------
-    */
-
-    pusher.connection.bind(
-        'connected',
-        function () {
-
-            console.log(
-                '✅ Pusher Channels connected'
-            );
-
-        }
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Pusher Connection Error
-    |--------------------------------------------------------------------------
-    */
-
-    pusher.connection.bind(
-        'error',
-        function (error) {
-
-            console.error(
-                '❌ Pusher Channels error:',
-                error
-            );
-
-        }
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Doctor Channel
-    |--------------------------------------------------------------------------
-    */
-
-    const channelName =
-        'doctor.{{ auth()->id() }}';
-
-
-    console.log(
-        '📡 Subscribing to:',
-        channelName
-    );
-
-
-    const channel =
-        pusher.subscribe(channelName);
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Channel Subscription
-    |--------------------------------------------------------------------------
-    */
-
-    channel.bind(
-        'pusher:subscription_succeeded',
-        function () {
-
-            console.log(
-                '✅ Successfully subscribed to:',
-                channelName
-            );
-
-        }
-    );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | TEST NOTIFICATION
-    |--------------------------------------------------------------------------
-    */
-
-    channel.bind(
-        'test.notification',
-        function (data) {
-
-            console.log(
-                '🔔 Test notification received:',
-                data
-            );
-
-
-            showNotificationToast(
-                data.title,
-                data.message,
+            /* ---------------------------------------------------------
+             | Pusher Configuration
+             |---------------------------------------------------------- */
+            const pusher = new Pusher(
+                @json(config('broadcasting.connections.pusher.key')),
                 {
-                    icon: 'bi-bell-fill',
-                    color: 'text-primary'
+                    cluster: @json(
+                        config('broadcasting.connections.pusher.options.cluster')
+                    ),
+                    forceTLS: true
                 }
             );
 
-        }
-    );
-</script>
+            /* ---------------------------------------------------------
+             | Connection
+             |---------------------------------------------------------- */
+            pusher.connection.bind('connected', function () {
+                console.log('Pusher connected');
+            });
+
+            pusher.connection.bind('error', function (error) {
+                console.error('Pusher connection error:', error);
+            });
+
+            /* ---------------------------------------------------------
+             | User Channel
+             |---------------------------------------------------------
+             |
+             | Each authenticated user gets their own private notification
+             | channel based on their user ID.
+             |
+             --------------------------------------------------------- */
+            const channelName = @json('user.' . auth()->id());
+            const channel = pusher.subscribe(channelName);
+
+            /* ---------------------------------------------------------
+             | Subscription
+             |---------------------------------------------------------- */
+            channel.bind(
+                'pusher:subscription_succeeded',
+                function () {
+                    console.log('Subscribed to:', channelName);
+                }
+            );
+
+            /* ---------------------------------------------------------
+             | Test Notification
+             |---------------------------------------------------------- */
+            channel.bind('test.notification', function (data) {
+                console.log(
+                    'Test notification received:',
+                    data
+                );
+
+                showNotificationToast(data);
+            });
+
+            /* ---------------------------------------------------------
+             | Patient Registered
+             |---------------------------------------------------------- */
+            channel.bind('patient.registered', function (data) {
+                console.log(
+                    'Patient registered notification:',
+                    data
+                );
+
+                showNotificationToast(data);
+            });
+
+        });
+    </script>
+@endauth

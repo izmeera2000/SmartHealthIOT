@@ -367,7 +367,9 @@ class PatientController extends Controller
             'email' => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
 
-            'patient_id' => ['required', 'string', 'unique:patients,patient_id'],
+            // Patient ID is optional
+            'patient_id' => ['nullable', 'string', 'unique:patients,patient_id'],
+
             'ic_number' => ['nullable', 'string', 'max:255'],
             'date_of_birth' => ['nullable', 'date'],
             'gender' => ['nullable', 'string'],
@@ -394,9 +396,31 @@ class PatientController extends Controller
             // Assign patient role
             $user->assignRole('patient');
 
+            /*
+             * Generate Patient ID automatically if none was provided.
+             *
+             * Example:
+             * PAT-00001
+             * PAT-00002
+             * PAT-00003
+             */
+            $patientId = $validated['patient_id'] ?? null;
+
+            if (empty($patientId)) {
+                do {
+                    $patientId = 'PAT-' . str_pad(
+                        (string) (Patient::max('id') + 1),
+                        5,
+                        '0',
+                        STR_PAD_LEFT
+                    );
+                } while (Patient::where('patient_id', $patientId)->exists());
+            }
+
             $patient = Patient::create([
                 'user_id' => $user->id,
-                'patient_id' => $validated['patient_id'],
+                'patient_id' => $patientId,
+
                 'ic_number' => $validated['ic_number'] ?? null,
                 'date_of_birth' => $validated['date_of_birth'] ?? null,
                 'gender' => $validated['gender'] ?? null,
@@ -422,7 +446,6 @@ class PatientController extends Controller
             return $patient;
         });
 
-
         // Notify the currently logged-in doctor
         auth()->user()->notify(
             new PatientRegisteredNotification(
@@ -431,11 +454,11 @@ class PatientController extends Controller
             )
         );
 
-
         return redirect()
             ->route('doctor.patients.index')
             ->with('success', 'Patient created successfully.');
     }
+
 
 
     /*

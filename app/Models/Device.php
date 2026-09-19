@@ -73,4 +73,10 @@ class Device extends Model
     {
         return $this->hasMany(SensorReading::class);
     }
+
+    public function latestSensorReading()
+{
+    return $this->hasOne(SensorReading::class)
+        ->latestOfMany('recorded_at');
+}
 }

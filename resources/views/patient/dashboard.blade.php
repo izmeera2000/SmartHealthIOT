@@ -1,311 +1,1260 @@
 @extends('layouts.app')
+
 @section('content')
+    <section class="section">
 
-    <!-- Page Header -->
+        @if($device)
 
-    <!-- Stats Row -->
-    <div class="dashboard-grid dashboard-grid-4">
-        <!-- Total Revenue -->
-        <div class="card widget-stat">
-            <div class="widget-stat-header">
-                <div>
-                    <div class="widget-stat-value">$248,762</div>
-                    <div class="widget-stat-label">Ambient Temp</div>
-                </div>
-                <div class="widget-stat-icon primary">
-                    <i class="bi bi-currency-dollar"></i>
-                </div>
-            </div>
-            <div class="widget-stat-change positive">
-                <i class="bi bi-arrow-up"></i> 15.3% vs last month
-            </div>
-        </div>
+            {{-- ========================================= --}}
+            {{-- DEVICE CONNECTED: SHOW HEALTH DASHBOARD --}}
+            {{-- ========================================= --}}
 
-        <!-- Total Expenses -->
-        <div class="card widget-stat">
-            <div class="widget-stat-header">
-                <div>
-                    <div class="widget-stat-value">$86,429</div>
-                    <div class="widget-stat-label">Body Temp</div>
-                </div>
-                <div class="widget-stat-icon danger">
-                    <i class="bi bi-wallet2"></i>
-                </div>
-            </div>
-            <div class="widget-stat-change positive">
-                <i class="bi bi-arrow-up"></i> 8.7% vs last month
-            </div>
-        </div>
 
-        <!-- Net Profit -->
-        <div class="card widget-stat">
-            <div class="widget-stat-header">
-                <div>
-                    <div class="widget-stat-value">$162,333</div>
-                    <div class="widget-stat-label">Sp02</div>
-                </div>
-                <div class="widget-stat-icon success">
-                    <i class="bi bi-graph-up-arrow"></i>
-                </div>
-            </div>
-            <div class="widget-stat-change positive">
-                <i class="bi bi-arrow-up"></i> 22.5% vs last month
-            </div>
-        </div>
 
-        <!-- Cash Flow -->
-        <div class="card widget-stat">
-            <div class="widget-stat-header">
-                <div>
-                    <div class="widget-stat-value">$52,847</div>
-                    <div class="widget-stat-label">BPM</div>
-                </div>
-                <div class="widget-stat-icon info">
-                    <i class="bi bi-arrow-left-right"></i>
-                </div>
-            </div>
-            <div class="widget-stat-change negative">
-                <i class="bi bi-arrow-down"></i> 3.2% vs last month
-            </div>
-        </div>
-    </div>
+            {{-- Device Status --}}
+            <div class="card mb-4">
+                <div class="card-body d-flex justify-content-between align-items-center">
 
-    <!-- Main Content Row -->
-    <div class="two-column-layout">
-        <!-- Left Column -->
-        <div>
-            <!-- Revenue vs Expenses Chart -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">Revenue vs Expenses</h5>
-                    <div class="card-actions">
-                        <select class="form-select form-select-sm" style="width: auto;" id="financePeriod">
-                            <option value="7">Last 7 days</option>
-                            <option value="30" selected>Last 30 days</option>
-                            <option value="90">Last 90 days</option>
-                            <option value="365">Last year</option>
-                        </select>
+                    <div>
+                        <h5 class="mb-1">
+                            {{ $device->device_name ?? 'Health Monitoring Device' }}
+                        </h5>
+
+                        <small class="text-muted">
+                            Device UID: {{ $device->device_uid }}
+                        </small>
                     </div>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" id="revenueExpensesChart"></div>
+
+                    <div>
+                        @if($device->status === 'active')
+                            <span class="badge badge-soft-success">
+                                <i class="bi bi-circle-fill me-1"></i>
+                                Connected
+                            </span>
+                        @else
+                            <span class="badge badge-soft-danger">
+                                <i class="bi bi-circle-fill me-1"></i>
+                                Offline
+                            </span>
+                        @endif
+                    </div>
+
                 </div>
             </div>
 
-     
-        </div>
 
-        <!-- Right Column -->
-        <div>
-            <!-- Budget Overview -->
-            
+            {{-- Health Stats --}}
+            <div class="dashboard-grid dashboard-grid-4">
 
-            <!-- Recent Invoices -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">Location History</h5>
-                    <div class="card-actions">
-                        <a href="dashboard-finance.html#" class="btn btn-sm btn-outline-primary">View All</a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="invoice-list">
-                        <div class="invoice-item">
-                            <div class="invoice-info">
-                                <div class="invoice-number">#INV-2024</div>
-                                <div class="invoice-client">Client ABC Corp.</div>
-                                <div class="invoice-date">Due: Jan 30, 2026</div>
+                {{-- Ambient Temperature --}}
+                <div class="card widget-stat">
+                    <div class="widget-stat-header">
+                        <div>
+                            <div class="widget-stat-value">
+                                {{ $device->latestSensorReading?->ambient_temperature ?? '--' }} °C
                             </div>
-                            <div class="invoice-details">
-                                <div class="invoice-amount">$12,500.00</div>
-                                <span class="badge badge-soft-success">Paid</span>
+
+                            <div class="widget-stat-label">
+                                Ambient Temperature
                             </div>
                         </div>
-                        <div class="invoice-item">
-                            <div class="invoice-info">
-                                <div class="invoice-number">#INV-2023</div>
-                                <div class="invoice-client">Client XYZ Inc.</div>
-                                <div class="invoice-date">Due: Jan 28, 2026</div>
-                            </div>
-                            <div class="invoice-details">
-                                <div class="invoice-amount">$8,750.00</div>
-                                <span class="badge badge-soft-warning">Pending</span>
-                            </div>
-                        </div>
-                        <div class="invoice-item">
-                            <div class="invoice-info">
-                                <div class="invoice-number">#INV-2022</div>
-                                <div class="invoice-client">Tech Solutions Ltd.</div>
-                                <div class="invoice-date">Due: Jan 25, 2026</div>
-                            </div>
-                            <div class="invoice-details">
-                                <div class="invoice-amount">$15,200.00</div>
-                                <span class="badge badge-soft-success">Paid</span>
-                            </div>
-                        </div>
-                        <div class="invoice-item">
-                            <div class="invoice-info">
-                                <div class="invoice-number">#INV-2021</div>
-                                <div class="invoice-client">Global Enterprises</div>
-                                <div class="invoice-date">Due: Jan 20, 2026</div>
-                            </div>
-                            <div class="invoice-details">
-                                <div class="invoice-amount">$6,890.00</div>
-                                <span class="badge badge-soft-danger">Overdue</span>
-                            </div>
-                        </div>
-                        <div class="invoice-item">
-                            <div class="invoice-info">
-                                <div class="invoice-number">#INV-2020</div>
-                                <div class="invoice-client">StartUp Innovations</div>
-                                <div class="invoice-date">Due: Jan 15, 2026</div>
-                            </div>
-                            <div class="invoice-details">
-                                <div class="invoice-amount">$9,450.00</div>
-                                <span class="badge badge-soft-success">Paid</span>
-                            </div>
+
+                        <div class="widget-stat-icon primary">
+                            <i class="bi bi-thermometer-half"></i>
                         </div>
                     </div>
                 </div>
+
+
+                {{-- Body Temperature --}}
+                <div class="card widget-stat">
+                    <div class="widget-stat-header">
+                        <div>
+                            <div class="widget-stat-value">
+                                {{ $device->latestSensorReading?->body_temperature ?? '--' }} °C
+                            </div>
+
+                            <div class="widget-stat-label">
+                                Body Temperature
+                            </div>
+                        </div>
+
+                        <div class="widget-stat-icon danger">
+                            <i class="bi bi-thermometer"></i>
+                        </div>
+                    </div>
+                </div>
+
+
+                {{-- SpO2 --}}
+                <div class="card widget-stat">
+                    <div class="widget-stat-header">
+                        <div>
+                            <div class="widget-stat-value">
+                                {{ $device->latestSensorReading?->spo2 ?? '--' }} %
+                            </div>
+
+                            <div class="widget-stat-label">
+                                SpO₂
+                            </div>
+                        </div>
+
+                        <div class="widget-stat-icon success">
+                            <i class="bi bi-lungs"></i>
+                        </div>
+                    </div>
+                </div>
+
+
+                {{-- Heart Rate --}}
+                <div class="card widget-stat">
+                    <div class="widget-stat-header">
+                        <div>
+                            <div class="widget-stat-value">
+                                {{ $device->latestSensorReading?->heart_rate ?? '--' }}
+                                <small>BPM</small>
+                            </div>
+
+                            <div class="widget-stat-label">
+                                Heart Rate
+                            </div>
+                        </div>
+
+                        <div class="widget-stat-icon info">
+                            <i class="bi bi-heart-pulse"></i>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-        </div>
-    </div>
 
 
+            {{-- Charts --}}
+            <div class="two-column-layout">
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            Health Readings
+                        </h5>
+
+                        <div class="card-actions">
+                            <select class="form-select form-select-sm" id="readingPeriod">
+                                <option value="7">Last 7 days</option>
+                                <option value="30" selected>Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div id="healthReadingsChart" style="min-height: 350px;"></div>
+                    </div>
+                </div>
+
+
+                <div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                Device Information
+                            </h5>
+                        </div>
+
+                        <div class="card-body">
+
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    Device Name
+                                </small>
+
+                                <div class="fw-semibold">
+                                    {{ $device->device_name ?? 'Health Device' }}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    Device UID
+                                </small>
+
+                                <div class="fw-semibold">
+                                    {{ $device->device_uid }}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    Firmware
+                                </small>
+
+                                <div class="fw-semibold">
+                                    {{ $device->firmware_version ?? 'Unknown' }}
+                                </div>
+                            </div>
+
+                            <div>
+                                <small class="text-muted">
+                                    Last Seen
+                                </small>
+
+                                <div class="fw-semibold">
+                                    {{ $device->last_seen_at
+                ? $device->last_seen_at->diffForHumans()
+                : 'Never'
+                                                                    }}
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        @else
+
+            {{-- ========================================= --}}
+            {{-- NO DEVICE: GETTING STARTED / TODO LIST --}}
+            {{-- ========================================= --}}
+
+
+
+            <div class="row g-4">
+                <div class="col-12">
+
+                    <div class="card">
+
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                Register Your Health Device
+                            </h5>
+
+                            <p class="card-subtitle">
+                                Follow the steps below to connect your SmartHealthIoT device.
+                            </p>
+                        </div>
+
+
+                        <div class="card-body">
+
+                            {{-- Wizard Steps --}}
+                            <div class="wizard-steps mb-4">
+
+                                <div class="wizard-step active" data-step="1">
+                                    <div class="wizard-step-icon">
+                                        <span class="wizard-step-number">1</span>
+                                        <i class="bi bi-check-lg wizard-step-check"></i>
+                                    </div>
+
+                                    <div class="wizard-step-label">
+                                        Device
+                                    </div>
+                                </div>
+
+
+                                <div class="wizard-step" data-step="2">
+                                    <div class="wizard-step-icon">
+                                        <span class="wizard-step-number">2</span>
+                                        <i class="bi bi-check-lg wizard-step-check"></i>
+                                    </div>
+
+                                    <div class="wizard-step-label">
+                                        Pair
+                                    </div>
+                                </div>
+
+
+                                <div class="wizard-step" data-step="3">
+                                    <div class="wizard-step-icon">
+                                        <span class="wizard-step-number">3</span>
+                                        <i class="bi bi-check-lg wizard-step-check"></i>
+                                    </div>
+
+                                    <div class="wizard-step-label">
+                                        Connect
+                                    </div>
+                                </div>
+
+
+                                <div class="wizard-step" data-step="4">
+                                    <div class="wizard-step-icon">
+                                        <span class="wizard-step-number">4</span>
+                                        <i class="bi bi-check-lg wizard-step-check"></i>
+                                    </div>
+
+                                    <div class="wizard-step-label">
+                                        Finish
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                            {{-- Wizard Form --}}
+                            <form id="deviceRegistrationWizard" method="POST" action=" ">
+
+                                @csrf
+
+
+                                {{-- ========================= --}}
+                                {{-- STEP 1 --}}
+                                {{-- ========================= --}}
+
+                                <div class="wizard-content active" data-step="1">
+
+                                    <h5 class="mb-4">
+                                        Device Information
+                                    </h5>
+
+                                    <div class="row g-3">
+
+                                        <div class="col-md-6">
+
+                                            <label for="device_name" class="form-label">
+                                                Device Name
+                                                <span class="text-danger">*</span>
+                                            </label>
+
+                                            <input type="text" class="form-control" id="device_name" name="device_name"
+                                                placeholder="e.g. My Health Monitor" value="{{ old('device_name') }}" required>
+
+                                        </div>
+
+
+                                        <div class="col-md-6">
+
+                                            <label for="device_uid" class="form-label">
+                                                Device UID
+                                                <span class="text-danger">*</span>
+                                            </label>
+
+                                            <input type="text" class="form-control" id="device_uid" name="device_uid"
+                                                placeholder="Enter the UID shown on your device" value="{{ old('device_uid') }}"
+                                                required>
+
+                                            <div class="form-text">
+                                                You can find the Device UID on your
+                                                ESP32 display.
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                {{-- ========================= --}}
+                                {{-- STEP 2 --}}
+                                {{-- ========================= --}}
+
+                                <div class="wizard-content" data-step="2">
+
+                                    <h5 class="mb-4">
+                                        Pair Your Device
+                                    </h5>
+
+
+                                    <div class="text-center py-3">
+
+                                        <div class="mb-4">
+
+                                            <div class="rounded-circle
+                                                                           bg-primary-light
+                                                                           text-primary
+                                                                           d-flex
+                                                                           align-items-center
+                                                                           justify-content-center
+                                                                           mx-auto" style="width: 80px; height: 80px;">
+                                                <i class="bi bi-phone" style="font-size: 36px;"></i>
+                                            </div>
+
+                                        </div>
+
+
+                                        <h5>
+                                            Enter Your Pairing Code
+                                        </h5>
+
+                                        <p class="text-muted">
+                                            Enter the pairing code displayed on your
+                                            ESP32 device.
+                                        </p>
+
+
+                                        <div class="row justify-content-center">
+
+                                            <div class="col-md-5">
+
+                                                <label for="pairing_code" class="form-label">
+                                                    Pairing Code
+                                                    <span class="text-danger">*</span>
+                                                </label>
+
+                                                <input type="text" class="form-control text-center" id="pairing_code"
+                                                    name="pairing_code" placeholder="123456" maxlength="6" required>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                {{-- ========================= --}}
+                                {{-- STEP 3 --}}
+                                {{-- ========================= --}}
+
+                                <div class="wizard-content" data-step="3">
+
+                                    <h5 class="mb-4">
+                                        Connect Your Device
+                                    </h5>
+
+
+                                    <div class="row justify-content-center">
+
+                                        <div class="col-lg-8">
+
+                                            <div class="alert alert-info">
+
+                                                <i class="bi bi-info-circle me-2"></i>
+
+                                                Make sure your ESP32 is powered on
+                                                and connected to Wi-Fi.
+
+                                            </div>
+
+
+                                            <div class="d-flex align-items-start mb-4">
+
+                                                <div class="me-3">
+
+                                                    <span class="badge bg-primary rounded-circle">
+                                                        1
+                                                    </span>
+
+                                                </div>
+
+                                                <div>
+
+                                                    <strong>
+                                                        Turn on your device
+                                                    </strong>
+
+                                                    <div class="text-muted small">
+                                                        Power on the SmartHealthIoT
+                                                        health monitoring device.
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="d-flex align-items-start mb-4">
+
+                                                <div class="me-3">
+
+                                                    <span class="badge bg-primary rounded-circle">
+                                                        2
+                                                    </span>
+
+                                                </div>
+
+                                                <div>
+
+                                                    <strong>
+                                                        Connect to Wi-Fi
+                                                    </strong>
+
+                                                    <div class="text-muted small">
+                                                        Configure your device with your
+                                                        Wi-Fi network.
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="d-flex align-items-start">
+
+                                                <div class="me-3">
+
+                                                    <span class="badge bg-success rounded-circle">
+                                                        <i class="bi bi-check"></i>
+                                                    </span>
+
+                                                </div>
+
+                                                <div>
+
+                                                    <strong>
+                                                        Wait for connection
+                                                    </strong>
+
+                                                    <div class="text-muted small">
+                                                        Your device will automatically
+                                                        connect to SmartHealthIoT.
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                {{-- ========================= --}}
+                                {{-- STEP 4 --}}
+                                {{-- ========================= --}}
+
+                                <div class="wizard-content" data-step="4">
+
+                                    <div class="text-center py-4">
+
+                                        <div class="mb-4">
+
+                                            <div class="wizard-finish-icon">
+                                                <i class="bi bi-check-circle"></i>
+                                            </div>
+
+                                        </div>
+
+
+                                        <h4 class="mb-2">
+                                            Ready to Register!
+                                        </h4>
+
+                                        <p class="text-muted mb-4">
+                                            Review your device information before
+                                            completing registration.
+                                        </p>
+
+
+                                        <div class="card bg-light mx-auto" style="max-width: 500px;">
+
+                                            <div class="card-body text-start">
+
+                                                <div class="mb-3">
+
+                                                    <small class="text-muted">
+                                                        Device Name
+                                                    </small>
+
+                                                    <div id="reviewDeviceName" class="fw-semibold">
+                                                        -
+                                                    </div>
+
+                                                </div>
+
+
+                                                <div class="mb-3">
+
+                                                    <small class="text-muted">
+                                                        Device UID
+                                                    </small>
+
+                                                    <div id="reviewDeviceUid" class="fw-semibold">
+                                                        -
+                                                    </div>
+
+                                                </div>
+
+
+                                                <div>
+
+                                                    <small class="text-muted">
+                                                        Pairing Code
+                                                    </small>
+
+                                                    <div id="reviewPairingCode" class="fw-semibold">
+                                                        -
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                {{-- Wizard Actions --}}
+                                <div class="wizard-actions">
+
+                                    <button type="button" class="btn btn-outline-secondary wizard-prev" disabled>
+                                        <i class="bi bi-arrow-left me-1"></i>
+                                        Previous
+                                    </button>
+
+
+                                    <button type="button" class="btn btn-primary wizard-next">
+                                        Next
+                                        <i class="bi bi-arrow-right ms-1"></i>
+                                    </button>
+
+
+                                    <button type="submit" class="btn btn-success wizard-submit" style="display: none;">
+                                        <i class="bi bi-check-lg me-1"></i>
+                                        Register Device
+                                    </button>
+
+                                </div>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+        @endif
+    </section>
 @endsection
 
 
+@push('scripts')
 
-@section('scripts')
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            let currentStep = 1;
+
+            const totalSteps = 4;
+
+            const wizard = document.getElementById(
+                'deviceRegistrationWizard'
+            );
+
+            const nextButton = document.querySelector(
+                '.wizard-next'
+            );
+
+            const prevButton = document.querySelector(
+                '.wizard-prev'
+            );
+
+            const submitButton = document.querySelector(
+                '.wizard-submit'
+            );
+
+
+            function showStep(step) {
+
+                currentStep = step;
+
+
+                // Content
+                document
+                    .querySelectorAll('.wizard-content')
+                    .forEach(function (content) {
+
+                        content.classList.remove('active');
+
+                        if (
+                            parseInt(
+                                content.dataset.step
+                            ) === step
+                        ) {
+                            content.classList.add('active');
+                        }
+
+                    });
+
+
+                // Progress
+                document
+                    .querySelectorAll('.wizard-step')
+                    .forEach(function (wizardStep) {
+
+                        const stepNumber =
+                            parseInt(
+                                wizardStep.dataset.step
+                            );
+
+                        wizardStep.classList.remove(
+                            'active',
+                            'completed'
+                        );
+
+
+                        if (stepNumber === step) {
+
+                            wizardStep.classList.add(
+                                'active'
+                            );
+
+                        } else if (stepNumber < step) {
+
+                            wizardStep.classList.add(
+                                'completed'
+                            );
+
+                        }
+
+                    });
+
+
+                // Previous
+                prevButton.disabled = step === 1;
+
+
+                // Next / Submit
+                if (step === totalSteps) {
+
+                    nextButton.style.display = 'none';
+
+                    submitButton.style.display = 'inline-block';
+
+                    updateReview();
+
+                } else {
+
+                    nextButton.style.display = 'inline-block';
+
+                    submitButton.style.display = 'none';
+
+                }
+
+            }
+
+
+            function validateStep(step) {
+
+                const content = document.querySelector(
+                    `.wizard-content[data-step="${step}"]`
+                );
+
+                const inputs = content.querySelectorAll(
+                    'input[required], select[required], textarea[required]'
+                );
+
+
+                let valid = true;
+
+
+                inputs.forEach(function (input) {
+
+                    if (!input.checkValidity()) {
+
+                        input.reportValidity();
+
+                        valid = false;
+
+                    }
+
+                });
+
+
+                return valid;
+
+            }
+
+
+            nextButton.addEventListener(
+                'click',
+                function () {
+
+                    if (!validateStep(currentStep)) {
+                        return;
+                    }
+
+                    if (currentStep < totalSteps) {
+
+                        showStep(
+                            currentStep + 1
+                        );
+
+                    }
+
+                }
+            );
+
+
+            prevButton.addEventListener(
+                'click',
+                function () {
+
+                    if (currentStep > 1) {
+
+                        showStep(
+                            currentStep - 1
+                        );
+
+                    }
+
+                }
+            );
+
+
+            function updateReview() {
+
+                document.getElementById(
+                    'reviewDeviceName'
+                ).textContent =
+                    document.getElementById(
+                        'device_name'
+                    ).value || '-';
+
+
+                document.getElementById(
+                    'reviewDeviceUid'
+                ).textContent =
+                    document.getElementById(
+                        'device_uid'
+                    ).value || '-';
+
+
+                document.getElementById(
+                    'reviewPairingCode'
+                ).textContent =
+                    document.getElementById(
+                        'pairing_code'
+                    ).value || '-';
+
+            }
+
+
+            showStep(1);
+
+        });
+
+    </script>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
-            const successColor = getComputedStyle(document.documentElement).getPropertyValue('--success-color').trim();
-            const dangerColor = getComputedStyle(document.documentElement).getPropertyValue('--danger-color').trim();
-            const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
-            const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--muted-color').trim();
-            // Revenue vs Expenses Chart
-            const revenueExpensesOptions = {
-                series: [{
-                    name: 'Revenue',
-                    data: [28500, 32100, 29800, 35600, 31200, 38900, 34500, 41200, 37800, 44500, 40100, 48200]
-                }, {
-                    name: 'Expenses',
-                    data: [12300, 14200, 13100, 15800, 14200, 16900, 15400, 18200, 16800, 19800, 18200, 21400]
-                }],
-                chart: {
-                    type: 'area',
-                    height: 320,
-                    fontFamily: 'inherit',
-                    toolbar: {
-                        show: false
+
+            // Make sure ApexCharts is available
+            if (typeof ApexCharts === 'undefined') {
+                console.error('ApexCharts is not loaded.');
+                return;
+            }
+
+            const chartElement = document.querySelector('#healthReadingsChart');
+            const periodSelector = document.querySelector('#readingPeriod');
+
+            if (!chartElement) {
+                console.error('Health readings chart element not found.');
+                return;
+            }
+
+            // Sensor readings supplied by DashboardController
+            const readings = @json($sensorReadings ?? []);
+
+            console.log('Sensor readings:', readings);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Prepare readings
+            |--------------------------------------------------------------------------
+            */
+
+            function getChartData(days) {
+
+                const cutoff = new Date();
+
+                cutoff.setDate(
+                    cutoff.getDate() - Number(days)
+                );
+
+                return readings.filter(function (reading) {
+
+                    if (!reading.recorded_at) {
+                        return false;
+                    }
+
+                    const recordedAt = new Date(
+                        reading.recorded_at
+                    );
+
+                    return !isNaN(recordedAt.getTime())
+                        && recordedAt >= cutoff;
+                });
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Build ApexCharts series
+            |--------------------------------------------------------------------------
+            */
+
+            function buildSeries(days) {
+
+                const data = getChartData(days);
+
+                return [
+
+                    // Heart Rate
+                    {
+                        name: 'Heart Rate',
+                        data: data
+                            .filter(function (item) {
+                                return item.heart_rate !== null
+                                    && item.heart_rate !== undefined;
+                            })
+                            .map(function (item) {
+                                return {
+                                    x: new Date(
+                                        item.recorded_at
+                                    ).getTime(),
+
+                                    y: Number(
+                                        item.heart_rate
+                                    )
+                                };
+                            })
                     },
+
+                    // SpO2
+                    {
+                        name: 'SpO₂',
+                        data: data
+                            .filter(function (item) {
+                                return item.spo2 !== null
+                                    && item.spo2 !== undefined;
+                            })
+                            .map(function (item) {
+                                return {
+                                    x: new Date(
+                                        item.recorded_at
+                                    ).getTime(),
+
+                                    y: Number(
+                                        item.spo2
+                                    )
+                                };
+                            })
+                    },
+
+                    // Body Temperature
+                    {
+                        name: 'Body Temperature',
+                        data: data
+                            .filter(function (item) {
+                                return item.body_temperature !== null
+                                    && item.body_temperature !== undefined;
+                            })
+                            .map(function (item) {
+                                return {
+                                    x: new Date(
+                                        item.recorded_at
+                                    ).getTime(),
+
+                                    y: Number(
+                                        item.body_temperature
+                                    )
+                                };
+                            })
+                    },
+
+                    // Ambient Temperature
+                    {
+                        name: 'Ambient Temperature',
+                        data: data
+                            .filter(function (item) {
+                                return item.ambient_temperature !== null
+                                    && item.ambient_temperature !== undefined;
+                            })
+                            .map(function (item) {
+                                return {
+                                    x: new Date(
+                                        item.recorded_at
+                                    ).getTime(),
+
+                                    y: Number(
+                                        item.ambient_temperature
+                                    )
+                                };
+                            })
+                    }
+                ];
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Chart options
+            |--------------------------------------------------------------------------
+            */
+
+            const options = {
+
+                chart: {
+                    type: 'line',
+                    height: 350,
+
+                    toolbar: {
+                        show: true
+                    },
+
                     zoom: {
-                        enabled: false
+                        enabled: true
+                    },
+
+                    animations: {
+                        enabled: true
                     }
                 },
-                colors: [successColor, dangerColor],
-                dataLabels: {
-                    enabled: false
-                },
+
+
+                series: buildSeries(30),
+
+
                 stroke: {
                     curve: 'smooth',
                     width: 2
                 },
-                fill: {
-                    type: 'gradient',
-                    gradient: {
-                        shadeIntensity: 1,
-                        opacityFrom: 0.4,
-                        opacityTo: 0.1,
-                        stops: [0, 90, 100]
+
+
+                markers: {
+                    size: 3,
+
+                    hover: {
+                        size: 5
                     }
                 },
+
+
                 xaxis: {
-                    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                    axisBorder: {
-                        show: false
-                    },
-                    axisTicks: {
-                        show: false
-                    },
+
+                    type: 'datetime',
+
                     labels: {
-                        style: {
-                            colors: mutedColor,
-                            fontSize: '12px'
-                        }
+                        datetimeUTC: false
+                    },
+
+                    title: {
+                        text: 'Time'
                     }
                 },
-                yaxis: {
-                    labels: {
-                        style: {
-                            colors: mutedColor,
-                            fontSize: '12px'
+
+
+                yaxis: [
+
+                    // Heart Rate
+                    {
+                        seriesName: 'Heart Rate',
+
+                        title: {
+                            text: 'Heart Rate (BPM)'
                         },
-                        formatter: function (value) {
-                            return '$' + (value / 1000).toFixed(0) + 'k';
+
+                        labels: {
+                            formatter: function (value) {
+                                return Math.round(value);
+                            }
                         }
-                    }
-                },
-                grid: {
-                    borderColor: borderColor,
-                    strokeDashArray: 4,
-                    xaxis: {
-                        lines: {
-                            show: false
-                        }
-                    }
-                },
-                legend: {
-                    position: 'top',
-                    horizontalAlign: 'right',
-                    fontSize: '13px',
-                    markers: {
-                        width: 10,
-                        height: 10,
-                        radius: 4
                     },
-                    itemMargin: {
-                        horizontal: 12
+
+                    // SpO2
+                    {
+                        seriesName: 'SpO₂',
+
+                        opposite: true,
+
+                        title: {
+                            text: 'SpO₂ (%)'
+                        },
+
+                        min: 80,
+                        max: 100,
+
+                        labels: {
+                            formatter: function (value) {
+                                return Math.round(value) + '%';
+                            }
+                        }
+                    },
+
+                    // Body Temperature
+                    {
+                        seriesName: 'Body Temperature',
+
+                        title: {
+                            text: 'Body Temp (°C)'
+                        },
+
+                        labels: {
+                            formatter: function (value) {
+                                return Number(value).toFixed(1) + '°';
+                            }
+                        }
+                    },
+
+                    // Ambient Temperature
+                    {
+                        seriesName: 'Ambient Temperature',
+
+                        opposite: true,
+
+                        title: {
+                            text: 'Ambient Temp (°C)'
+                        },
+
+                        labels: {
+                            formatter: function (value) {
+                                return Number(value).toFixed(1) + '°';
+                            }
+                        }
+                    }
+                ],
+
+
+                tooltip: {
+
+                    shared: false,
+
+                    x: {
+                        formatter: function (value) {
+
+                            return new Date(value)
+                                .toLocaleString([], {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+                        }
+                    },
+
+                    y: {
+                        formatter: function (
+                            value,
+                            {
+                                seriesIndex
+                            }
+                        ) {
+
+                            if (seriesIndex === 0) {
+                                return Math.round(value) + ' BPM';
+                            }
+
+                            if (seriesIndex === 1) {
+                                return Number(value).toFixed(0) + '%';
+                            }
+
+                            if (seriesIndex === 2) {
+                                return Number(value).toFixed(1) + ' °C';
+                            }
+
+                            if (seriesIndex === 3) {
+                                return Number(value).toFixed(1) + ' °C';
+                            }
+
+                            return value;
+                        }
                     }
                 },
-                tooltip: {
-                    shared: true,
-                    intersect: false,
-                    y: {
-                        formatter: function (value) {
-                            return '$' + value.toLocaleString();
-                        }
+
+
+                legend: {
+
+                    position: 'top',
+
+                    horizontalAlign: 'left',
+
+                    itemMargin: {
+                        horizontal: 10
+                    }
+                },
+
+
+                grid: {
+                    borderColor: '#e7e7e7',
+
+                    strokeDashArray: 4
+                },
+
+
+                dataLabels: {
+                    enabled: false
+                },
+
+
+                noData: {
+                    text: 'No sensor readings available',
+
+                    align: 'center',
+
+                    verticalAlign: 'middle',
+
+                    style: {
+                        fontSize: '14px'
                     }
                 }
             };
-            const revenueExpensesChart = new ApexCharts(document.querySelector('#revenueExpensesChart'), revenueExpensesOptions);
-            revenueExpensesChart.render();
-            // Update chart on theme change
-            document.addEventListener('themeChanged', function () {
-                const newBorderColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
-                const newMutedColor = getComputedStyle(document.documentElement).getPropertyValue('--muted-color').trim();
-                revenueExpensesChart.updateOptions({
-                    grid: {
-                        borderColor: newBorderColor
-                    },
-                    xaxis: {
-                        labels: {
-                            style: {
-                                colors: newMutedColor
-                            }
-                        }
-                    },
-                    yaxis: {
-                        labels: {
-                            style: {
-                                colors: newMutedColor
-                            }
-                        }
-                    }
-                });
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Create chart
+            |--------------------------------------------------------------------------
+            */
+
+            const healthChart = new ApexCharts(
+                chartElement,
+                options
+            );
+
+            healthChart.render().then(function () {
+
+                // Hide all health readings except Heart Rate by default
+                healthChart.hideSeries('SpO₂');
+                healthChart.hideSeries('Body Temperature');
+                healthChart.hideSeries('Ambient Temperature');
+
             });
+
+            /*
+            |--------------------------------------------------------------------------
+            | Change period
+            |--------------------------------------------------------------------------
+            */
+
+            if (periodSelector) {
+
+                periodSelector.addEventListener(
+                    'change',
+                    function () {
+
+                        const days = Number(
+                            this.value
+                        );
+
+                        console.log(
+                            'Changing chart period:',
+                            days,
+                            'days'
+                        );
+
+                        healthChart.updateSeries(
+                            buildSeries(days)
+                        );
+                    }
+                );
+            }
+
         });
     </script>
-@endsection
+
+@endpush

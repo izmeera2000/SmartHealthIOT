@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Device;
 use App\Models\User;
+use App\Models\Patient;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -19,13 +20,19 @@ class DeviceFactory extends Factory
         return [
             'doctor_id' => User::factory(),
 
+            'patient_id' => null,
+
             'device_uid' => 'ESP32-' . strtoupper(Str::random(10)),
 
             'mac_address' => fake()->unique()->macAddress(),
 
             'device_name' => 'Health Monitor ' . fake()->numberBetween(1, 999),
 
-            'firmware_version' => 'v' . fake()->numberBetween(1, 3) . '.' . fake()->numberBetween(0, 9) . '.' . fake()->numberBetween(0, 9),
+            'firmware_version' =>
+                'v' .
+                fake()->numberBetween(1, 3) . '.' .
+                fake()->numberBetween(0, 9) . '.' .
+                fake()->numberBetween(0, 9),
 
             'auth_token' => Str::random(64),
 
@@ -41,10 +48,23 @@ class DeviceFactory extends Factory
         ];
     }
 
+    /**
+     * Assign the device to a doctor.
+     */
     public function forDoctor(User $doctor): static
-{
-    return $this->state(fn (array $attributes) => [
-        'doctor_id' => $doctor->id,
-    ]);
-}
+    {
+        return $this->state(fn (array $attributes) => [
+            'doctor_id' => $doctor->id,
+        ]);
+    }
+
+    /**
+     * Assign the device to a patient.
+     */
+    public function forPatient(Patient $patient): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'patient_id' => $patient->id,
+        ]);
+    }
 }

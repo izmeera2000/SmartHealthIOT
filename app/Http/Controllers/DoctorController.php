@@ -411,7 +411,7 @@ class DoctorController extends Controller
                             $validated['password']
                         ),
 
-                        
+
 
                     'profile_photo' =>
                         $profilePhoto,
@@ -477,41 +477,39 @@ class DoctorController extends Controller
     {
         $doctor->load('user');
 
+        $isOwnProfile = auth()->check()
+            && auth()->user()->id === $doctor->user_id;
+
+        if ($isOwnProfile) {
+
+                 return redirect()->route('profile.index');
+
+
+        } else {
+
+            $pageTitle = 'Doctor Details';
+
+            $breadcrumbs = [
+                [
+                    'title' => 'Doctors',
+                    'url' => route(
+                        'doctor.doctors.index'
+                    ),
+                ],
+                [
+                    'title' => $doctor->id,
+                    'url' => route(
+                        'doctor.doctors.show',
+                        $doctor
+                    ),
+                ],
+            ];
+        }
 
         return view('doctor.doctors.show', [
-
-            'doctor' =>
-                $doctor,
-
-            'pageTitle' =>
-                'Doctor Details',
-
-            'breadcrumbs' => [
-
-                [
-                    'title' =>
-                        'Doctors',
-
-                    'url' =>
-                        route(
-                            'doctor.doctors.index'
-                        ),
-                ],
-
-                
-                [
-                    'title' =>
-                       $doctor->id,
-
-                    'url' =>
-                        route(
-                            'doctor.doctors.show',
-                            $doctor
-                        ),
-                ],
-
-            ],
-
+            'doctor' => $doctor,
+            'pageTitle' => $pageTitle,
+            'breadcrumbs' => $breadcrumbs,
         ]);
     }
 
@@ -571,210 +569,204 @@ class DoctorController extends Controller
     */
 
     public function update(
-    Request $request,
-    Doctor $doctor
-) {
-    $doctor->load('user');
+        Request $request,
+        Doctor $doctor
+    ) {
+        $doctor->load('user');
 
-    $validated = $request->validate([
-        'first_name' => [
-            'required',
-            'string',
-            'max:255',
-        ],
+        $validated = $request->validate([
+            'first_name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
-        'last_name' => [
-            'required',
-            'string',
-            'max:255',
-        ],
+            'last_name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
 
-        'email' => [
-            'required',
-            'email',
-            'unique:users,email,' . $doctor->user_id,
-        ],
+            'email' => [
+                'required',
+                'email',
+                'unique:users,email,' . $doctor->user_id,
+            ],
 
-        'doctor_id' => [
-            'required',
-            'string',
-            'unique:doctors,doctor_id,' . $doctor->id,
-        ],
+            'doctor_id' => [
+                'required',
+                'string',
+                'unique:doctors,doctor_id,' . $doctor->id,
+            ],
 
-        'specialization' => [
-            'nullable',
-            'string',
-            'max:255',
-        ],
+            'specialization' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
-        'phone' => [
-            'nullable',
-            'string',
-            'max:255',
-        ],
+            'phone' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
-        'profile_photo' => [
-            'nullable',
-            'image',
-            'mimes:jpg,jpeg,png,webp',
-            'max:2048',
-        ],
+            'profile_photo' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:2048',
+            ],
 
-        'remove_profile_photo' => [
-            'nullable',
-            'boolean',
-        ],
-    ]);
+            'remove_profile_photo' => [
+                'nullable',
+                'boolean',
+            ],
+        ]);
 
-    $user = $doctor->user;
+        $user = $doctor->user;
 
-    // Store the old photo path from USERS table
-    $oldPhoto = $user->profile_photo;
+        // Store the old photo path from USERS table
+        $oldPhoto = $user->profile_photo;
 
-    $newPhoto = null;
+        $newPhoto = null;
 
-    try {
-
-        /*
-        |--------------------------------------------------------------------------
-        | Upload new profile photo
-        |--------------------------------------------------------------------------
-        */
-
-        if ($request->hasFile('profile_photo')) {
-
-            $newPhoto = $request
-                ->file('profile_photo')
-                ->store(
-                    'profile-photos/doctors',
-                    'public'
-                );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Update database
-        |--------------------------------------------------------------------------
-        */
-
-        DB::transaction(function () use (
-            $validated,
-            $doctor,
-            $user,
-            $newPhoto,
-            $request
-        ) {
+        try {
 
             /*
             |--------------------------------------------------------------------------
-            | Update User
+            | Upload new profile photo
             |--------------------------------------------------------------------------
             */
 
-            $user->update([
-                'name' =>
-                    $validated['first_name']
-                    . ' '
-                    . $validated['last_name'],
+            if ($request->hasFile('profile_photo')) {
 
-                'email' =>
-                    $validated['email'],
-            ]);
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Profile Photo
-            |--------------------------------------------------------------------------
-            */
-
-            $photo = $user->profile_photo;
-
-
-            // New photo uploaded
-            if ($newPhoto) {
-                $photo = $newPhoto;
+                $newPhoto = $request
+                    ->file('profile_photo')
+                    ->store(
+                        'profile-photos/doctors',
+                        'public'
+                    );
             }
 
 
-            // User removed photo
+            /*
+            |--------------------------------------------------------------------------
+            | Update database
+            |--------------------------------------------------------------------------
+            */
+
+            DB::transaction(function () use ($validated, $doctor, $user, $newPhoto, $request) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | Update User
+                |--------------------------------------------------------------------------
+                */
+
+                $user->update([
+                    'name' =>
+                        $validated['first_name']
+                        . ' '
+                        . $validated['last_name'],
+
+                    'email' =>
+                        $validated['email'],
+                ]);
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Profile Photo
+                |--------------------------------------------------------------------------
+                */
+
+                $photo = $user->profile_photo;
+
+
+                // New photo uploaded
+                if ($newPhoto) {
+                    $photo = $newPhoto;
+                }
+
+
+                // User removed photo
+                if (
+                    $request->boolean('remove_profile_photo')
+                ) {
+                    $photo = null;
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Save profile photo to USERS table
+                |--------------------------------------------------------------------------
+                */
+
+                $user->update([
+                    'profile_photo' => $photo,
+                ]);
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Update Doctor
+                |--------------------------------------------------------------------------
+                */
+
+                $doctor->update([
+                    'doctor_id' =>
+                        $validated['doctor_id'],
+
+                    'specialization' =>
+                        $validated['specialization'] ?? null,
+
+                    'phone' =>
+                        $validated['phone'] ?? null,
+                ]);
+            });
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Delete old photo
+            |--------------------------------------------------------------------------
+            */
+
             if (
-                $request->boolean('remove_profile_photo')
+                ($newPhoto || $request->boolean('remove_profile_photo'))
+                && $oldPhoto
             ) {
-                $photo = null;
+                Storage::disk('public')->delete($oldPhoto);
             }
 
+        } catch (\Throwable $e) {
 
             /*
             |--------------------------------------------------------------------------
-            | Save profile photo to USERS table
+            | Delete newly uploaded photo if database update fails
             |--------------------------------------------------------------------------
             */
 
-            $user->update([
-                'profile_photo' => $photo,
-            ]);
+            if ($newPhoto) {
+                Storage::disk('public')->delete($newPhoto);
+            }
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | Update Doctor
-            |--------------------------------------------------------------------------
-            */
-
-            $doctor->update([
-                'doctor_id' =>
-                    $validated['doctor_id'],
-
-                'specialization' =>
-                    $validated['specialization'] ?? null,
-
-                'phone' =>
-                    $validated['phone'] ?? null,
-            ]);
-        });
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Delete old photo
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            ($newPhoto || $request->boolean('remove_profile_photo'))
-            && $oldPhoto
-        ) {
-            Storage::disk('public')->delete($oldPhoto);
+            throw $e;
         }
 
-    } catch (\Throwable $e) {
 
-        /*
-        |--------------------------------------------------------------------------
-        | Delete newly uploaded photo if database update fails
-        |--------------------------------------------------------------------------
-        */
-
-        if ($newPhoto) {
-            Storage::disk('public')->delete($newPhoto);
-        }
-
-        throw $e;
+        return redirect()
+            ->route(
+                'doctor.doctors.show',
+                $doctor
+            )
+            ->with(
+                'success',
+                'Doctor updated successfully.'
+            );
     }
-
-
-    return redirect()
-        ->route(
-            'doctor.doctors.show',
-            $doctor
-        )
-        ->with(
-            'success',
-            'Doctor updated successfully.'
-        );
-}
 
 
     /*

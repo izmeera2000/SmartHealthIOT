@@ -27,32 +27,7 @@
 
                     <div class="d-flex gap-2">
 
-                        {{-- Mark all as read --}}
-                        @if($unreadCount > 0)
 
-                            <form method="POST"
-                                  action="{{ route('notifications.readAll') }}">
-
-                                @csrf
-
-                                <button type="submit"
-                                        class="btn btn-sm btn-outline-primary">
-
-                                    <i class="bi bi-check2-all me-1"></i>
-
-                                    <span class="d-none d-sm-inline">
-                                        Mark all as read
-                                    </span>
-
-                                    <span class="d-sm-none">
-                                        Mark read
-                                    </span>
-
-                                </button>
-
-                            </form>
-
-                        @endif
 
 
                         {{-- Filter --}}
@@ -86,6 +61,33 @@
                             </ul>
 
                         </div>
+
+                                                {{-- Mark all as read --}}
+                        @if($unreadCount > 0)
+
+                            <form method="POST"
+                                  action="{{ route('notifications.readAll') }}">
+
+                                @csrf
+
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-primary">
+
+                                    <i class="bi bi-check2-all me-1"></i>
+
+                                    <span class="d-none d-sm-inline">
+                                        Mark all as read
+                                    </span>
+
+                                    <span class="d-sm-none">
+                                        Mark read
+                                    </span>
+
+                                </button>
+
+                            </form>
+
+                        @endif
 
                     </div>
 

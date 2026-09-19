@@ -1,447 +1,518 @@
-<!-- Sidebar -->
+@php
+  $user = auth()->user();
+
+  $isAdmin = $user?->hasRole('admin');
+  $isDoctor = $user?->hasRole('doctor');
+  $isPatient = $user?->hasRole('patient');
+
+  /*
+  |--------------------------------------------------------------------------
+  | Active Route Helper
+  |--------------------------------------------------------------------------
+  */
+  $isActive = fn($routes) =>
+    request()->routeIs($routes);
+@endphp
+
+
+<!-- =========================================================
+     Sidebar
+========================================================= -->
+
 <aside class="sidebar">
-  <!-- Sidebar Header -->
+
+
+  <!-- =====================================================
+         Sidebar Header
+    ====================================================== -->
+
   <div class="sidebar-header">
+
     <a href="{{ route('dashboard') }}" class="sidebar-logo">
+
       <img src="{{ asset('assets/img/logo.webp') }}" alt="SmartHealthIOT">
+
       <span class="sidebar-logo-text">
-        <span class="sidebar-logo-name">SmartHealthIOT</span>
-        <span class="sidebar-logo-tagline">Admin Panel</span>
+
+        <span class="sidebar-logo-name">
+          SmartHealthIOT
+        </span>
+
+        <span class="sidebar-logo-tagline">
+
+          @if($isAdmin)
+            Admin Panel
+          @elseif($isDoctor)
+            Doctor Portal
+          @elseif($isPatient)
+            Patient Portal
+          @else
+            Health IoT
+          @endif
+
+        </span>
+
       </span>
+
     </a>
-    <button class="sidebar-close">
+
+
+    <button class="sidebar-close" type="button" title="Close Sidebar">
+
       <i class="bi bi-x-lg"></i>
+
     </button>
+
   </div>
 
-  <!-- Sidebar Navigation -->
+
+
+  <!-- =====================================================
+         Sidebar Navigation
+    ====================================================== -->
+
   <nav class="sidebar-nav">
+
     <ul class="nav-menu">
 
 
+      <!-- =================================================
+                 MAIN
+            ================================================== -->
+
+      <li class="nav-heading">
+
+        <span>MAIN</span>
+
+      </li>
+
+
+      <!-- Home -->
+
       <li class="nav-item">
-        <a class="nav-link " href="{{ route('dashboard') }}" data-tooltip="Home">
+
+        <a class="nav-link {{ $isActive('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}"
+          data-tooltip="Home">
+
           <i class="ph-duotone ph-squares-four"></i>
+
           <span>Home</span>
+
         </a>
+
       </li>
 
-      <!-- Users -->
-      <li class="nav-item has-submenu ">
-        <a class="nav-link" href="#" aria-expanded="false" data-tooltip="Patients">
-          <i class="ph-duotone ph-users"></i>
-          <span>Patients</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu ">
-          <li><a class="nav-link " href="{{ route('doctor.patients.index') }}">List</a></li>
-          {{-- <li><a class="nav-link " href="users-view.html">Patients View</a></li> --}}
-          {{-- <li><a class="nav-link " href="users-edit.html">Patients Edit</a></li> --}}
-          {{-- <li><a class="nav-link " href="profile.html">Profile</a></li> --}}
-          <!-- 3rd Level - Settings submenu -->
-          {{-- <li class="has-submenu ">
-            <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false">
-              Settings
-              <i class="ph-duotone ph-caret-down nav-arrow"></i>
+
+
+      <!-- =================================================
+                 DOCTOR NAVIGATION
+            ================================================== -->
+
+      @if($isDoctor)
+
+
+        <li class="nav-heading">
+
+          <span>CLINICAL</span>
+
+        </li>
+
+
+        <!-- Patients -->
+
+        <li class="nav-item has-submenu">
+
+          <a class="nav-link
+                                  {{ $isActive('doctor.patients.*') ? 'active' : '' }}" href="#"
+            aria-expanded="{{ $isActive('doctor.patients.*') ? 'true' : 'false' }}" data-tooltip="Patients">
+
+            <i class="ph-duotone ph-users"></i>
+
+            <span>Patients</span>
+
+            <i class="ph-duotone ph-caret-down nav-arrow"></i>
+
+          </a>
+
+
+          <ul class="nav-submenu
+                                  {{ $isActive('doctor.patients.*') ? 'show' : '' }}">
+
+            <li>
+
+              <a class="nav-link
+                                          {{ $isActive('doctor.patients.index') ? 'active' : '' }}"
+                href="{{ route('doctor.patients.index') }}">
+
+
+                <span>All Patients</span>
+
+              </a>
+
+            </li>
+
+
+            <li>
+
+              <a class="nav-link
+                                          {{ $isActive('doctor.patients.create') ? 'active' : '' }}"
+                href="{{ route('doctor.patients.create') }}">
+
+
+                <span>Add Patient</span>
+
+              </a>
+
+            </li>
+
+          </ul>
+
+        </li>
+
+
+
+        <!-- Devices -->
+
+        <li class="nav-item has-submenu">
+
+          <a class="nav-link
+                                  {{ $isActive('doctor.devices.*') ? 'active' : '' }}" href="#"
+            aria-expanded="{{ $isActive('doctor.devices.*') ? 'true' : 'false' }}" data-tooltip="Devices">
+
+            <i class="ph-duotone ph-first-aid-kit"></i>
+
+            <span>Devices</span>
+
+            <i class="ph-duotone ph-caret-down nav-arrow"></i>
+
+          </a>
+
+
+          <ul class="nav-submenu
+                                  {{ $isActive('doctor.devices.*') ? 'show' : '' }}">
+
+            <li>
+
+              <a class="nav-link
+                                          {{ $isActive('doctor.devices.index') ? 'active' : '' }}"
+                href="{{ route('doctor.devices.index') }}">
+
+
+                <span>All Devices</span>
+
+              </a>
+
+            </li>
+
+
+            @if(Route::has('doctor.devices.create'))
+
+              <li>
+
+                <a class="nav-link
+                                                    {{ $isActive('doctor.devices.create') ? 'active' : '' }}"
+                  href="{{ route('doctor.devices.create') }}">
+
+
+                  <span>Add Device</span>
+
+                </a>
+
+              </li>
+
+            @endif
+
+          </ul>
+
+        </li>
+
+
+      @endif
+
+
+
+      <!-- =================================================
+                 ADMIN NAVIGATION
+            ================================================== -->
+
+      @if($isAdmin || $isDoctor)
+
+
+        <li class="nav-heading">
+
+          <span>MANAGEMENT</span>
+
+        </li>
+
+
+        <!-- Doctors -->
+
+        <li class="nav-item has-submenu">
+
+          <a class="nav-link
+                                  {{ $isActive('doctor.doctors.*') ? 'active' : '' }}" href="#"
+            aria-expanded="{{ $isActive('doctor.doctors.*') ? 'true' : 'false' }}" data-tooltip="Doctors">
+
+            <i class="ph-duotone ph-stethoscope"></i>
+
+            <span>Doctors</span>
+
+            <i class="ph-duotone ph-caret-down nav-arrow"></i>
+
+          </a>
+
+
+          <ul class="nav-submenu
+                                  {{ $isActive('doctor.doctors.*') ? 'show' : '' }}">
+
+            <li>
+
+              <a class="nav-link
+                                          {{ $isActive('doctor.doctors.index') ? 'active' : '' }}"
+                href="{{ route('doctor.doctors.index') }}">
+
+
+                <span>Directory</span>
+
+              </a>
+
+            </li>
+
+
+            @if(Route::has('doctor.doctors.create'))
+
+              <li>
+
+                <a class="nav-link
+                                                    {{ $isActive('doctor.doctors.create') ? 'active' : '' }}"
+                  href="{{ route('doctor.doctors.create') }}">
+
+
+                  <span>Add Doctor</span>
+
+                </a>
+
+              </li>
+
+            @endif
+
+          </ul>
+
+        </li>
+
+
+
+
+
+
+
+
+        <!-- Roles & Permissions -->
+
+        @if(Route::has('admin.roles.index'))
+
+          <li class="nav-item">
+
+            <a class="nav-link
+                                            {{ $isActive('admin.roles.*') ? 'active' : '' }}"
+              href="{{ route('admin.roles.index') }}" data-tooltip="Roles">
+
+              <i class="ph-duotone ph-shield-check"></i>
+
+              <span>Roles & Permissions</span>
+
             </a>
-            <ul class="nav-submenu ">
-              <li><a class="nav-link " href="settings.html">Account</a></li>
-              <li><a class="nav-link " href="notifications.html">Notifications</a></li>
-              <li><a class="nav-link " href="activity.html">Activity</a></li>
-            </ul>
-          </li> --}}
-          {{-- <li><a class="nav-link " href="roles.html">Roles & Permissions</a></li> --}}
-        </ul>
-      </li>
 
-
-      <li class="nav-item has-submenu ">
-        <a class="nav-link" href="#" aria-expanded="false" data-tooltip="Devices">
-          <i class="ph-duotone ph-first-aid-kit"></i>
-          <span>Devices</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu ">
-          <li><a class="nav-link " href="{{ route('doctor.devices.index') }}">List</a></li>
-           {{-- <li><a class="nav-link " href="users-view.html">Patients View</a></li> --}}
-          {{-- <li><a class="nav-link " href="users-edit.html">Patients Edit</a></li> --}}
-          {{-- <li><a class="nav-link " href="profile.html">Profile</a></li> --}}
-          <!-- 3rd Level - Settings submenu -->
-          {{-- <li class="has-submenu ">
-            <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false">
-              Settings
-              <i class="ph-duotone ph-caret-down nav-arrow"></i>
-            </a>
-            <ul class="nav-submenu ">
-              <li><a class="nav-link " href="settings.html">Account</a></li>
-              <li><a class="nav-link " href="notifications.html">Notifications</a></li>
-              <li><a class="nav-link " href="activity.html">Activity</a></li>
-            </ul>
-          </li> --}}
-          {{-- <li><a class="nav-link " href="roles.html">Roles & Permissions</a></li> --}}
-        </ul>
-      </li>
-
-
-      <li class="nav-item has-submenu ">
-        <a class="nav-link" href="#" aria-expanded="false" data-tooltip="Staff">
-          <i class="ph-duotone ph-users"></i>
-          <span>Doctors</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu ">
-          <li><a class="nav-link " href="{{ route('doctor.doctors.index') }}">Directory</a></li>
-          {{-- <li><a class="nav-link " href="users-view.html">Patients View</a></li> --}}
-          {{-- <li><a class="nav-link " href="users-edit.html">Patients Edit</a></li> --}}
-          {{-- <li><a class="nav-link " href="profile.html">Profile</a></li> --}}
-          <!-- 3rd Level - Settings submenu -->
-          {{-- <li class="has-submenu ">
-            <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false">
-              Settings
-              <i class="ph-duotone ph-caret-down nav-arrow"></i>
-            </a>
-            <ul class="nav-submenu ">
-              <li><a class="nav-link " href="settings.html">Account</a></li>
-              <li><a class="nav-link " href="notifications.html">Notifications</a></li>
-              <li><a class="nav-link " href="activity.html">Activity</a></li>
-            </ul>
-          </li> --}}
-          {{-- <li><a class="nav-link " href="roles.html">Roles & Permissions</a></li> --}}
-        </ul>
-      </li>
-
-
-         <li class="nav-item">
-        <a class="nav-link " href="index.html" data-tooltip="Home">
-          <i class="ph-duotone ph-user"></i>
-          <span>Profile</span>
-        </a>
-      </li>
-
-
-
-
-
-
-
-{{-- 
-      <li class="nav-item">
-        <a class="nav-link " href="index.html" data-tooltip="Dashboard">
-          <i class="ph-duotone ph-squares-four"></i>
-          <span>Dashboard</span>
-        </a>
-      </li> --}}
-
-      <!-- Dashboards Submenu -->
-      {{-- <li class="nav-item has-submenu open">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="true" data-tooltip="Dashboards">
-          <i class="ph-duotone ph-speedometer"></i>
-          <span>Dashboards</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu show">
-          <li><a class="nav-link " href="dashboard-sales.html">Sales</a></li>
-          <li><a class="nav-link " href="dashboard-analytics.html">Analytics</a></li>
-          <li><a class="nav-link " href="dashboard-crm.html">CRM</a></li>
-          <li><a class="nav-link " href="dashboard-marketing.html">Marketing</a></li>
-          <li><a class="nav-link " href="dashboard-projects.html">Projects</a></li>
-          <li><a class="nav-link active" href="dashboard-finance.html">Finance</a></li>
-        </ul>
-      </li> --}}
-
-      <!-- Users -->
-      {{-- <li class="nav-item has-submenu ">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false" data-tooltip="Users">
-          <i class="ph-duotone ph-users"></i>
-          <span>Users</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu ">
-          <li><a class="nav-link " href="users.html">Users List</a></li>
-          <li><a class="nav-link " href="users-view.html">User View</a></li>
-          <li><a class="nav-link " href="users-edit.html">User Edit</a></li>
-          <li><a class="nav-link " href="profile.html">Profile</a></li>
-          <!-- 3rd Level - Settings submenu -->
-          <li class="has-submenu ">
-            <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false">
-              Settings
-              <i class="ph-duotone ph-caret-down nav-arrow"></i>
-            </a>
-            <ul class="nav-submenu ">
-              <li><a class="nav-link " href="settings.html">Account</a></li>
-              <li><a class="nav-link " href="notifications.html">Notifications</a></li>
-              <li><a class="nav-link " href="activity.html">Activity</a></li>
-            </ul>
           </li>
-          <li><a class="nav-link " href="roles.html">Roles & Permissions</a></li>
-        </ul>
-      </li> --}}
 
-      <!-- Authentication -->
-      {{-- <li class="nav-item has-submenu ">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false" data-tooltip="Authentication">
-          <i class="ph-duotone ph-shield-check"></i>
-          <span>Authentication</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu ">
-          <li><a class="nav-link " href="auth-login.html">Login</a></li>
-          <li><a class="nav-link " href="auth-register.html">Register</a></li>
-          <li><a class="nav-link " href="auth-forgot-password.html">Forgot Password</a></li>
-          <li><a class="nav-link " href="auth-reset-password.html">Reset Password</a></li>
-          <li><a class="nav-link " href="auth-verify-email.html">Email Verification</a></li>
-          <li><a class="nav-link " href="auth-two-factor.html">Two Factor Auth</a></li>
-          <li><a class="nav-link " href="auth-lock-screen.html">Lock Screen</a></li>
-        </ul>
-      </li> --}}
+        @endif
 
-      <!-- Apps Section -->
-      {{-- <li class="nav-heading"><span>Apps</span></li>
 
-      <li class="nav-item">
-        <a class="nav-link " href="apps-calendar.html" data-tooltip="Calendar">
-          <i class="ph-duotone ph-calendar"></i>
-          <span>Calendar</span>
-        </a>
+      @endif
+
+
+
+      <!-- =================================================
+                 PATIENT NAVIGATION
+            ================================================== -->
+
+      @if($isPatient)
+
+
+        <li class="nav-heading">
+
+          <span>MY HEALTH</span>
+
+        </li>
+
+
+        <!-- My Health -->
+
+        @if(Route::has('patient.health'))
+
+          <li class="nav-item">
+
+            <a class="nav-link
+                                            {{ $isActive('patient.health') ? 'active' : '' }}"
+              href="{{ route('patient.health') }}" data-tooltip="My Health">
+
+              <i class="ph-duotone ph-heartbeat"></i>
+
+              <span>My Health</span>
+
+            </a>
+
+          </li>
+
+        @endif
+
+
+
+        <!-- My Devices -->
+
+        @if(Route::has('patient.devices.index'))
+
+          <li class="nav-item">
+
+            <a class="nav-link
+                                            {{ $isActive('patient.devices.*') ? 'active' : '' }}"
+              href="{{ route('patient.devices.index') }}" data-tooltip="My Devices">
+
+              <i class="ph-duotone ph-first-aid-kit"></i>
+
+              <span>My Devices</span>
+
+            </a>
+
+          </li>
+
+        @endif
+
+
+
+        <!-- My Readings -->
+
+        @if(Route::has('patient.readings.index'))
+
+          <li class="nav-item">
+
+            <a class="nav-link
+                                            {{ $isActive('patient.readings.*') ? 'active' : '' }}"
+              href="{{ route('patient.readings.index') }}" data-tooltip="Health Readings">
+
+              <i class="ph-duotone ph-chart-line-up"></i>
+
+              <span>Health Readings</span>
+
+            </a>
+
+          </li>
+
+        @endif
+
+
+      @endif
+
+
+
+      <!-- =================================================
+                 ACCOUNT
+            ================================================== -->
+
+      <li class="nav-heading">
+
+        <span>ACCOUNT</span>
+
       </li>
 
-      <li class="nav-item">
-        <a class="nav-link " href="apps-kanban.html" data-tooltip="Kanban Board">
-          <i class="ph-duotone ph-kanban"></i>
-          <span>Kanban Board</span>
-        </a>
-      </li>
 
-      <li class="nav-item">
-        <a class="nav-link " href="apps-chat.html" data-tooltip="Chat">
-          <i class="ph-duotone ph-chats"></i>
-          <span>Chat</span>
-        </a>
-      </li>
+      <!-- Profile -->
 
-      <li class="nav-item">
-        <a class="nav-link " href="apps-contacts.html" data-tooltip="Contacts">
-          <i class="ph-duotone ph-address-book"></i>
-          <span>Contacts</span>
-        </a>
-      </li>
+      @if(Route::has('profile.index'))
 
-      <li class="nav-item">
-        <a class="nav-link " href="apps-file-manager.html" data-tooltip="File Manager">
-          <i class="ph-duotone ph-folder-open"></i>
-          <span>File Manager</span>
-        </a>
-      </li>
+        <li class="nav-item">
 
-      <li class="nav-item">
-        <a class="nav-link " href="apps-email.html" data-tooltip="Email">
-          <i class="ph-duotone ph-envelope"></i>
-          <span>Email</span>
-        </a>
-      </li>
+          <a class="nav-link
+                                  {{ $isActive('profile.*') ? 'active' : '' }}" href="{{ route('profile.index') }}"
+            data-tooltip="Profile">
 
-      <li class="nav-item">
-        <a class="nav-link " href="apps-todo.html" data-tooltip="Todo List">
-          <i class="ph-duotone ph-check-square"></i>
-          <span>Todo List</span>
-        </a>
-      </li>
+            <i class="ph-duotone ph-user"></i>
 
-      <li class="nav-item">
-        <a class="nav-link " href="apps-support.html" data-tooltip="Support Center">
-          <i class="ph-duotone ph-headset"></i>
-          <span>Support Center</span>
-        </a>
-      </li> --}}
+            <span>Profile</span>
 
-      <!-- UI Elements Section -->
-      {{-- <li class="nav-heading"><span>UI Elements</span></li> --}}
+          </a>
 
-      {{-- <li class="nav-item has-submenu ">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false" data-tooltip="Components">
-          <i class="ph-duotone ph-puzzle-piece"></i>
-          <span>Components</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu ">
-          <li><a class="nav-link " href="components-alerts.html">Alerts</a></li>
-          <li><a class="nav-link " href="components-accordion.html">Accordion</a></li>
-          <li><a class="nav-link " href="components-badges.html">Badges</a></li>
-          <li><a class="nav-link " href="components-breadcrumbs.html">Breadcrumbs</a></li>
-          <li><a class="nav-link " href="components-buttons.html">Buttons</a></li>
-          <li><a class="nav-link " href="components-cards.html">Cards</a></li>
-          <li><a class="nav-link " href="components-carousel.html">Carousel</a></li>
-          <li><a class="nav-link " href="components-dropdowns.html">Dropdowns</a></li>
-          <li><a class="nav-link " href="components-list-group.html">List Group</a></li>
-          <li><a class="nav-link " href="components-modal.html">Modal</a></li>
-          <li><a class="nav-link " href="components-nav-tabs.html">Navs & Tabs</a></li>
-          <li><a class="nav-link " href="components-offcanvas.html">Offcanvas</a></li>
-          <li><a class="nav-link " href="components-pagination.html">Pagination</a></li>
-          <li><a class="nav-link " href="components-popovers.html">Popovers</a></li>
-          <li><a class="nav-link " href="components-progress.html">Progress</a></li>
-          <li><a class="nav-link " href="components-spinners.html">Spinners</a></li>
-          <li><a class="nav-link " href="components-toasts.html">Toasts</a></li>
-          <li><a class="nav-link " href="components-tooltips.html">Tooltips</a></li>
-        </ul>
-      </li> --}}
+        </li>
 
-      <!-- Widgets -->
-      {{-- <li class="nav-item has-submenu ">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false" data-tooltip="Widgets">
-          <i class="ph-duotone ph-layout"></i>
-          <span>Widgets</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu ">
-          <li><a class="nav-link " href="widgets-cards.html">Cards</a></li>
-          <li><a class="nav-link " href="widgets-banners.html">Banners</a></li>
-          <li><a class="nav-link " href="widgets-charts.html">Charts</a></li>
-          <li><a class="nav-link " href="widgets-apps.html">Apps</a></li>
-          <li><a class="nav-link " href="widgets-data.html">Data</a></li>
-        </ul>
-      </li> --}}
+      @endif
 
-      <!-- Forms Section -->
-      {{-- <li class="nav-item has-submenu ">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false" data-tooltip="Forms">
-          <i class="ph-duotone ph-textbox"></i>
-          <span>Forms</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu ">
-          <li><a class="nav-link " href="forms-elements.html">Form Elements</a></li>
-          <li><a class="nav-link " href="forms-layouts.html">Form Layouts</a></li>
-          <li><a class="nav-link " href="forms-validation.html">Validation</a></li>
-          <li><a class="nav-link " href="forms-wizard.html">Wizard</a></li>
-          <li><a class="nav-link " href="forms-editors.html">Rich Editors</a></li>
-          <li><a class="nav-link " href="forms-pickers.html">Date/Time Pickers</a></li>
-          <li><a class="nav-link " href="forms-select.html">Advanced Select</a></li>
-          <li><a class="nav-link " href="forms-upload.html">File Upload</a></li>
-        </ul>
-      </li> --}}
 
-      <!-- Tables Section -->
-      {{-- <li class="nav-item has-submenu ">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false" data-tooltip="Tables">
-          <i class="ph-duotone ph-table"></i>
-          <span>Tables</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu ">
-          <li><a class="nav-link " href="tables-basic.html">Basic Tables</a></li>
-          <li><a class="nav-link " href="tables-datatables.html">DataTables</a></li>
-          <li><a class="nav-link " href="tables-responsive.html">Responsive Tables</a></li>
-        </ul>
-      </li> --}}
 
-      <!-- Charts Section -->
-      {{-- <li class="nav-item has-submenu ">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false" data-tooltip="Charts">
-          <i class="ph-duotone ph-chart-bar"></i>
-          <span>Charts</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu ">
-          <li><a class="nav-link " href="charts-apexcharts.html">ApexCharts</a></li>
-          <li><a class="nav-link " href="charts-chartjs.html">Chart.js</a></li>
-          <li><a class="nav-link " href="charts-echarts.html">ECharts</a></li>
-        </ul>
-      </li> --}}
+      <!-- Notifications -->
 
-      <!-- Icons Section -->
-      {{-- <li class="nav-item has-submenu ">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false" data-tooltip="Icons">
-          <i class="ph-duotone ph-diamond"></i>
-          <span>Icons</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu ">
-          <li><a class="nav-link " href="icons-bootstrap.html">Bootstrap Icons</a></li>
-          <li><a class="nav-link " href="icons-remixicon.html">Remix Icons</a></li>
-          <li><a class="nav-link " href="icons-fontawesome.html">Font Awesome</a></li>
-          <li><a class="nav-link " href="icons-phosphor.html">Phosphor Icons</a></li>
-          <li><a class="nav-link " href="icons-lucide.html">Lucide Icons</a></li>
-        </ul>
-      </li> --}}
+      @if(Route::has('notifications.index'))
 
-      <!-- Pages Section -->
-      {{-- <li class="nav-heading"><span>Pages</span></li>
+        <li class="nav-item">
 
-      <li class="nav-item">
-        <a class="nav-link " href="contact.html" data-tooltip="Contact">
-          <i class="ph-duotone ph-envelope"></i>
-          <span>Contact</span>
-        </a>
-      </li> --}}
+          <a class="nav-link
+                                  {{ $isActive('notifications.*') ? 'active' : '' }}"
+            href="{{ route('notifications.index') }}" data-tooltip="Notifications">
 
-      <!-- Invoices -->
-      {{-- <li class="nav-item has-submenu ">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false" data-tooltip="Invoices">
-          <i class="ph-duotone ph-receipt"></i>
-          <span>Invoices</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu ">
-          <li><a class="nav-link " href="invoice-list.html">Invoice List</a></li>
-          <li><a class="nav-link " href="invoice.html">Invoice View</a></li>
-        </ul>
-      </li>
+            <i class="ph-duotone ph-bell"></i>
 
-      <li class="nav-item">
-        <a class="nav-link " href="pricing.html" data-tooltip="Pricing">
-          <i class="ph-duotone ph-tag"></i>
-          <span>Pricing</span>
-        </a>
-      </li>
+            <span>Notifications</span>
 
-      <li class="nav-item">
-        <a class="nav-link " href="faq.html" data-tooltip="FAQ">
-          <i class="ph-duotone ph-question"></i>
-          <span>FAQ</span>
-        </a>
-      </li> --}}
+            @if(($headerUnreadCount ?? 0) > 0)
 
-      <!-- Error Pages -->
-      {{-- <li class="nav-item has-submenu ">
-        <a class="nav-link" href="dashboard-finance.html#" aria-expanded="false" data-tooltip="Error Pages">
-          <i class="ph-duotone ph-warning"></i>
-          <span>Error Pages</span>
-          <i class="ph-duotone ph-caret-down nav-arrow"></i>
-        </a>
-        <ul class="nav-submenu ">
-          <li><a class="nav-link " href="error-404.html">404 Not Found</a></li>
-          <li><a class="nav-link " href="error-403.html">403 Forbidden</a></li>
-          <li><a class="nav-link " href="error-500.html">500 Server Error</a></li>
-          <li><a class="nav-link " href="error-maintenance.html">Maintenance</a></li>
-          <li><a class="nav-link " href="error-coming-soon.html">Coming Soon</a></li>
-        </ul>
-      </li>
+                  <span class="sidebar-notification-badge">
 
-      <li class="nav-item">
-        <a class="nav-link " href="timeline.html" data-tooltip="Timeline">
-          <i class="ph-duotone ph-clock-counter-clockwise"></i>
-          <span>Timeline</span>
-        </a>
-      </li>
+                    {{ $headerUnreadCount > 99
+              ? '99+'
+              : $headerUnreadCount }}
 
-      <li class="nav-item">
-        <a class="nav-link " href="search-results.html" data-tooltip="Search Results">
-          <i class="ph-duotone ph-magnifying-glass"></i>
-          <span>Search Results</span>
-        </a>
-      </li>
+                  </span>
 
-      <li class="nav-item">
-        <a class="nav-link " href="blank.html" data-tooltip="Blank Page">
-          <i class="ph-duotone ph-file"></i>
-          <span>Blank Page</span>
-        </a>
-      </li> --}}
+            @endif
+
+          </a>
+
+        </li>
+
+      @endif
+
+
+
+      <!-- Settings -->
+
+      @if(Route::has('settings.index'))
+
+        <li class="nav-item">
+
+          <a class="nav-link
+                                  {{ $isActive('settings.*') ? 'active' : '' }}" href="{{ route('settings.index') }}"
+            data-tooltip="Settings">
+
+            <i class="ph-duotone ph-gear"></i>
+
+            <span>Settings</span>
+
+          </a>
+
+        </li>
+
+      @endif
+
+
 
     </ul>
+
   </nav>
 
 </aside>
 
-<!-- Sidebar Overlay (Mobile) -->
+
+<!-- =========================================================
+     Sidebar Overlay
+========================================================= -->
+
 <div class="sidebar-overlay"></div>

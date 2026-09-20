@@ -370,13 +370,13 @@
 
         <!-- My Devices -->
 
-        @if(Route::has('patient.devices.index'))
+        @if(Route::has('patient.devices'))
 
           <li class="nav-item">
 
             <a class="nav-link
                                             {{ $isActive('patient.devices.*') ? 'active' : '' }}"
-              href="{{ route('patient.devices.index') }}" data-tooltip="My Devices">
+              href="{{ route('patient.devices') }}" data-tooltip="My Devices">
 
               <i class="ph-duotone ph-first-aid-kit"></i>
 

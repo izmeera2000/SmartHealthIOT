@@ -33,6 +33,10 @@
     <link href="{{ asset('vendors/choices.js/choices.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/flatpickr/flatpickr.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables/datatables.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendors/swiper/swiper-bundle.min.css') }}" rel="stylesheet">
+
+    @stack('styles')
+
 
     <!-- Template Main CSS File -->
     <link href="{{ asset('assets/css/main.css') }}" rel="stylesheet">

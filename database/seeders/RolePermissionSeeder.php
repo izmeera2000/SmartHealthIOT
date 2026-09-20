@@ -10,19 +10,117 @@ class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Roles
-        Role::firstOrCreate(['name' => 'admin']);
-        Role::firstOrCreate(['name' => 'doctor']);
-        Role::firstOrCreate(['name' => 'patient']);
+        /*
+        |--------------------------------------------------------------------------
+        | Roles
+        |--------------------------------------------------------------------------
+        */
 
-        // Permissions
-        Permission::firstOrCreate(['name' => 'view patients']);
-        Permission::firstOrCreate(['name' => 'manage patients']);
+        $admin = Role::firstOrCreate([
+            'name' => 'admin',
+        ]);
 
-        Permission::firstOrCreate(['name' => 'view devices']);
-        Permission::firstOrCreate(['name' => 'manage devices']);
+        $doctor = Role::firstOrCreate([
+            'name' => 'doctor',
+        ]);
 
-        Permission::firstOrCreate(['name' => 'view sensor readings']);
-        Permission::firstOrCreate(['name' => 'manage sensor readings']);
+        $patient = Role::firstOrCreate([
+            'name' => 'patient',
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Permissions
+        |--------------------------------------------------------------------------
+        */
+
+        // Patients
+        $viewPatients = Permission::firstOrCreate([
+            'name' => 'view patients',
+        ]);
+
+        $managePatients = Permission::firstOrCreate([
+            'name' => 'manage patients',
+        ]);
+
+
+        // Devices
+        $viewDevices = Permission::firstOrCreate([
+            'name' => 'view devices',
+        ]);
+
+        $manageDevices = Permission::firstOrCreate([
+            'name' => 'manage devices',
+        ]);
+
+        $viewOwnDevices = Permission::firstOrCreate([
+            'name' => 'view own devices',
+        ]);
+
+
+        // Sensor Readings
+        $viewSensorReadings = Permission::firstOrCreate([
+            'name' => 'view sensor readings',
+        ]);
+
+        $manageSensorReadings = Permission::firstOrCreate([
+            'name' => 'manage sensor readings',
+        ]);
+
+        $viewOwnSensorReadings = Permission::firstOrCreate([
+            'name' => 'view own sensor readings',
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admin Permissions
+        |--------------------------------------------------------------------------
+        */
+
+        $admin->syncPermissions([
+            $viewPatients,
+            $managePatients,
+
+            $viewDevices,
+            $manageDevices,
+
+            $viewSensorReadings,
+            $manageSensorReadings,
+
+            $viewOwnDevices,
+            $viewOwnSensorReadings,
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Doctor Permissions
+        |--------------------------------------------------------------------------
+        */
+
+        $doctor->syncPermissions([
+            $viewPatients,
+            $managePatients,
+
+            $viewDevices,
+            $manageDevices,
+
+            $viewSensorReadings,
+            $manageSensorReadings,
+        ]);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Patient Permissions
+        |--------------------------------------------------------------------------
+        */
+
+        $patient->syncPermissions([
+            $viewOwnDevices,
+            $viewOwnSensorReadings,
+        ]);
     }
 }

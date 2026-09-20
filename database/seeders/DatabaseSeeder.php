@@ -14,38 +14,70 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Roles & permissions
+        /*
+        |--------------------------------------------------------------------------
+        | Roles & Permissions
+        |--------------------------------------------------------------------------
+        */
+
         $this->call(RolePermissionSeeder::class);
-        // Test Doctor User
-        $user = User::factory()->create([
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Test Doctor User
+        |--------------------------------------------------------------------------
+        */
+
+        $doctorUser = User::factory()->create([
             'name' => 'Test Doctor',
             'email' => 'doctor@example.com',
             'password' => Hash::make('123'),
         ]);
 
-        // Assign Spatie role
-        $user->assignRole('doctor');
+        $doctorUser->assignRole('doctor');
 
-        // Create Doctor profile
+
+        /*
+        |--------------------------------------------------------------------------
+        | Doctor Profile
+        |--------------------------------------------------------------------------
+        */
+
         $doctor = Doctor::create([
-            'user_id' => $user->id,
+            'user_id' => $doctorUser->id,
             'doctor_id' => 'DOC-0001',
             'specialization' => 'General Medicine',
             'phone' => '0123456789',
         ]);
-        // Test Patient User
-        $user2 = User::factory()->create([
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Test Patient User
+        |--------------------------------------------------------------------------
+        */
+
+        $patientUser = User::factory()->create([
             'name' => 'Patient',
             'email' => 'patient@example.com',
             'password' => Hash::make('12345678'),
         ]);
 
-        $user2->assignRole('patient');
+        $patientUser->assignRole('patient');
 
-        // Create Patient record
+
+        /*
+        |--------------------------------------------------------------------------
+        | Patient Profile
+        |--------------------------------------------------------------------------
+        */
+
         $patient = Patient::create([
-            'user_id' => $user2->id,
-            'doctor_id' => $user->id,
+            'user_id' => $patientUser->id,
+
+            // Doctor relationship
+            'doctor_id' => $doctorUser->id,
 
             'patient_id' => 'PAT-0001',
             'ic_number' => '900101-10-1234',
@@ -61,37 +93,74 @@ class DatabaseSeeder extends Seeder
             'height' => 175,
             'weight' => 70,
         ]);
-        // Create Patients
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Additional Patients
+        |--------------------------------------------------------------------------
+        */
+
         Patient::factory()
             ->count(5)
             ->create()
             ->each(function ($patient) {
+
                 $patient->user->assignRole('patient');
+
             });
 
-        // Create Doctors
+
+        /*
+        |--------------------------------------------------------------------------
+        | Additional Doctors
+        |--------------------------------------------------------------------------
+        */
+
         Doctor::factory()
             ->count(10)
             ->create()
             ->each(function ($doctor) {
+
                 $doctor->user->assignRole('doctor');
+
             });
-        // Create 30 Devices for Test Doctor only
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Devices For Test Doctor
+        |--------------------------------------------------------------------------
+        */
+
         Device::factory()
             ->count(4)
-            ->forDoctor($user)
+            ->forDoctor($doctorUser)
             ->create();
 
 
-            
-            $device = Device::factory()
-    ->forPatient($patient)
-            ->forDoctor($user)
+        /*
+        |--------------------------------------------------------------------------
+        | Device For Test Patient
+        |--------------------------------------------------------------------------
+        */
 
-    ->create();
+        $patientDevice = Device::factory()
+            ->forPatient($patient)
+            ->forDoctor($doctorUser)
+            ->create();
 
-        // Create 50 sensor readings for each device
-        Device::where('doctor_id', $user->id)
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sensor Readings
+        |--------------------------------------------------------------------------
+        |
+        | Create readings for every device belonging to the test doctor.
+        |
+        */
+
+        Device::where('doctor_id', $doctorUser->id)
             ->get()
             ->each(function ($device) {
 
@@ -102,7 +171,5 @@ class DatabaseSeeder extends Seeder
                     ]);
 
             });
-
-
     }
 }

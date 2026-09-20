@@ -16,6 +16,7 @@
 {{--
 <script src="{{ asset('vendors/php-email-form/validate.js') }}"></script> --}}
 
+<script src="{{ asset('vendors/swiper/swiper-bundle.min.js') }}"></script>
 
 <!-- =========================================
      Template Main JS Files

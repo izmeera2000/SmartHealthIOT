@@ -88,10 +88,7 @@ class Patient extends Model
     |--------------------------------------------------------------------------
     */
 
-    public function devices()
-    {
-        return $this->hasMany(Device::class);
-    }
+public function devices() { return $this->hasMany(Device::class, 'patient_id', 'id'); }
 
     public function doctor()
 {

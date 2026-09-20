@@ -7,6 +7,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\PatientUserController;
 use App\Http\Controllers\BeamsTestController;
 use App\Http\Controllers\DashboardController;
 
@@ -264,12 +265,29 @@ Route::middleware('auth')->group(function () {
 
 
 
-    Route::middleware('role:patient')->name('patient.')->group(function () {
+    Route::middleware('role:patient')
+        ->name('patient.')
+        ->group(function () {
 
+            // Devices
+            Route::get('/devices', [
+                PatientUserController::class,
+                'devices'
+            ])->name('devices');
 
+            // Readings for selected device
+            Route::get('/devices/{device}/readings', [
+                PatientUserController::class,
+                'readings'
+            ])->name('devices.readings');
 
+            // DataTables AJAX endpoint 
+            Route::get('/devices/{device}/readings-data', [
+                PatientUserController::class,
+                'readingsData'
+            ])->name('devices.readings.data');
 
-    });
+        });
 
 
     /*
@@ -301,7 +319,7 @@ Route::middleware('auth')->group(function () {
 
 
     Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])
-    ->name('profile.password.update');
+        ->name('profile.password.update');
 
     Route::get('/notifications', [
         NotificationController::class,
@@ -335,12 +353,12 @@ Route::prefix('test-errors')->group(function () {
         abort(404);
     });
 
- 
+
 
     Route::get('/500', function () {
         abort(500);
     });
- 
+
 
     // Coming Soon
     Route::get('/coming-soon', function () {
@@ -349,7 +367,7 @@ Route::prefix('test-errors')->group(function () {
 });
 
 
- 
+
 Route::view('/about', 'pages.about')->name('about');
 Route::view('/privacy', 'pages.privacy')->name('privacy');
 Route::view('/terms', 'pages.terms')->name('terms');

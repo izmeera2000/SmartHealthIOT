@@ -30930,3 +30930,12 @@ mark {
     text-align: center;
     width: 100%;
 }
+
+
+    .deviceSwiper .swiper-scrollbar {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.deviceSwiper .swiper-scrollbar-drag {
+    background: #fff;
+}

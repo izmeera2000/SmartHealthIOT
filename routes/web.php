@@ -132,71 +132,39 @@ Route::middleware('auth')->group(function () {
         |--------------------------------------------------------------------------
         */
 
-        Route::prefix('devices')
+        Route::prefix('doctor/devices')
             ->name('devices.')
             ->group(function () {
 
+                Route::get('/', [DeviceWebController::class, 'index'])
+                    ->name('index');
+ 
 
+                Route::get('/data', [DeviceWebController::class, 'data'])
+                    ->name('data');
 
-                // Page
-                Route::get('/', [
-                    DeviceWebController::class,
-                    'index'
-                ])->name('index');
+                Route::get('/create', [DeviceWebController::class, 'create'])
+                    ->name('create');
 
+                Route::post('/', [DeviceWebController::class, 'store'])
+                    ->name('store');
 
+                Route::get('/{device}/edit', [DeviceWebController::class, 'edit'])
+                    ->name('edit');
 
-                // JSON data for DataTables
-                Route::get('/data', [
-                    DeviceWebController::class,
-                    'data'
-                ])->name('data');
+                Route::get('/{device}/readings', [DeviceWebController::class, 'readings'])
+                    ->name('readings');
 
-                // Create
-                Route::get('/create', [
-                    DeviceWebController::class,
-                    'create'
-                ])->name('create');
+                Route::get('/{device}', [DeviceWebController::class, 'show'])
+                    ->name('show');
 
+                Route::put('/{device}', [DeviceWebController::class, 'update'])
+                    ->name('update');
 
-
-                Route::post('/', [
-                    DeviceWebController::class,
-                    'store'
-                ])->name('store');
-
-                // Show
-                Route::get('/{device}', [
-                    DeviceWebController::class,
-                    'show'
-                ])->name('show');
-
-                // Edit
-                Route::get('/{device}/edit', [
-                    DeviceWebController::class,
-                    'edit'
-                ])->name('edit');
-
-                Route::put('/{device}', [
-                    DeviceWebController::class,
-                    'update'
-                ])->name('update');
-
-
-                Route::get('/{device}/readings', [
-                    DeviceWebController::class,
-                    'readings'
-                ])->name('readings');
-
-                Route::delete('/{device}', [
-                    DeviceWebController::class,
-                    'destroy'
-                ])->name('destroy');
-
-
-
-
+                Route::delete('/{device}', [DeviceWebController::class, 'destroy'])
+                    ->name('destroy');
             });
+
 
 
         /*

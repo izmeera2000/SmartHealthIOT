@@ -190,6 +190,7 @@
 
           <ul class="nav-submenu
                                   {{ $isActive('doctor.devices.*') ? 'show' : '' }}">
+            @if(Route::has('doctor.devices.index'))
 
             <li>
 
@@ -203,6 +204,7 @@
               </a>
 
             </li>
+            @endif
 
 
             @if(Route::has('doctor.devices.create'))

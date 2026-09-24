@@ -11,6 +11,7 @@ return new class extends Migration
         $teams = config('permission.teams');
         $tableNames = config('permission.table_names');
         $columnNames = config('permission.column_names');
+
         $pivotRole = $columnNames['role_pivot_key'] ?? 'role_id';
         $pivotPermission = $columnNames['permission_pivot_key'] ?? 'permission_id';
 
@@ -35,12 +36,16 @@ return new class extends Migration
         Schema::create($tableNames['permissions'], static function (Blueprint $table) {
             $table->bigIncrements('id');
 
-            $table->string('name', 191);
-            $table->string('guard_name', 191);
+            // Shortened because these columns are part of a unique index.
+            $table->string('name', 125);
+            $table->string('guard_name', 25);
 
             $table->timestamps();
 
-            $table->unique(['name', 'guard_name']);
+            $table->unique(
+                ['name', 'guard_name'],
+                'permissions_name_guard_name_unique'
+            );
         });
 
         /*
@@ -49,7 +54,10 @@ return new class extends Migration
         |--------------------------------------------------------------------------
         */
 
-        Schema::create($tableNames['roles'], static function (Blueprint $table) use ($teams, $columnNames) {
+        Schema::create($tableNames['roles'], static function (Blueprint $table) use (
+            $teams,
+            $columnNames
+        ) {
             $table->bigIncrements('id');
 
             if ($teams || config('permission.testing')) {
@@ -63,22 +71,26 @@ return new class extends Migration
                 );
             }
 
-            $table->string('name', 191);
-            $table->string('guard_name', 191);
+            // Shortened because these columns are part of a unique index.
+            $table->string('name', 125);
+            $table->string('guard_name', 25);
 
             $table->timestamps();
 
             if ($teams || config('permission.testing')) {
-                $table->unique([
-                    $columnNames['team_foreign_key'],
-                    'name',
-                    'guard_name'
-                ]);
+                $table->unique(
+                    [
+                        $columnNames['team_foreign_key'],
+                        'name',
+                        'guard_name'
+                    ],
+                    'roles_team_name_guard_name_unique'
+                );
             } else {
-                $table->unique([
-                    'name',
-                    'guard_name'
-                ]);
+                $table->unique(
+                    ['name', 'guard_name'],
+                    'roles_name_guard_name_unique'
+                );
             }
         });
 

@@ -150,7 +150,7 @@ Route::middleware('auth')->group(function () {
                     ->name('store');
 
                 Route::get('/{device}/edit', [DeviceWebController::class, 'edit'])
-                    ->name('edit');
+                    ->name('edit'); 
 
                 Route::get('/{device}/readings', [DeviceWebController::class, 'readings'])
                     ->name('readings');

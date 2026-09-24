@@ -32,78 +32,79 @@ class PatientUserController extends Controller
         ]);
     }
 
- 
-public function readings(
-    Request $request,
 
-    Device $device
-): View {
+    public function readings(
+        Request $request,
 
-    $patient = $request->user()
-        ->patient()
-        ->firstOrFail();
+        Device $device
+    ): View {
 
-    // Make sure this device belongs to the logged-in patient.
-    abort_unless(
-        $device->patient_id === $patient->id,
-        403
-    );
+        $patient = $request->user()
+            ->patient()
+            ->firstOrFail();
 
-    $readingCount = $device->sensorReadings()->count();
+        // Make sure this device belongs to the logged-in patient.
+        abort_unless(
+            $device->patient_id === $patient->id,
+            403
+        );
 
-    return view('patient.devices.readings', [
-        'pageTitle' => 'Device Readings',
-        'patient' => $patient,
-        'device' => $device,
-        'readingCount' => $readingCount,
-    ]);
-}
+        $readingCount = $device->sensorReadings()->count();
 
-
-
- 
-public function readingsData(
-    Request $request,
-    Device $device
-): JsonResponse {
-
-    $patient = $request->user()
-        ->patient()
-        ->firstOrFail();
-
-    // Security check:
-    // Only allow the patient to access their own device.
-    abort_unless(
-        $device->patient_id === $patient->id,
-        403
-    );
-
-    $query = $device->sensorReadings()
-        ->select([
-            'id',
-            'device_id',
-            'heart_rate',
-            'body_temperature',
-            'ambient_temperature',
-            'battery_level',
-            'recorded_at',
+        return view('patient.devices.readings', [
+            'pageTitle' => 'Device Readings',
+            'patient' => $patient,
+            'device' => $device,
+            'readingCount' => $readingCount,
         ]);
+    }
 
-    return DataTables::of($query)
 
-        /*
-        |--------------------------------------------------------------------------
-        | Recorded At
-        |--------------------------------------------------------------------------
-        */
 
-        ->editColumn('recorded_at', function ($reading) {
 
-            if (!$reading->recorded_at) {
-                return '--';
-            }
+    public function readingsData(
+        Request $request,
+        Device $device
+    ): JsonResponse {
 
-            return '
+        $patient = $request->user()
+            ->patient()
+            ->firstOrFail();
+
+        // Security check:
+        // Only allow the patient to access their own device.
+        abort_unless(
+            $device->patient_id === $patient->id,
+            403
+        );
+
+        $query = $device->sensorReadings()
+            ->select([
+                'id',
+                'device_id',
+                'heart_rate',
+                'body_temperature',
+                'ambient_temperature',
+                'battery_level',
+                'recorded_at',
+            ])
+            ->latest('recorded_at')
+            ->limit(100);
+        return DataTables::of($query)
+
+            /*
+            |--------------------------------------------------------------------------
+            | Recorded At
+            |--------------------------------------------------------------------------
+            */
+
+            ->editColumn('recorded_at', function ($reading) {
+
+                if (!$reading->recorded_at) {
+                    return '--';
+                }
+
+                return '
                 <div class="fw-semibold">
                     ' . $reading->recorded_at->format('M d, Y') . '
                 </div>
@@ -112,22 +113,22 @@ public function readingsData(
                     ' . $reading->recorded_at->format('h:i:s A') . '
                 </small>
             ';
-        })
+            })
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Heart Rate
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | Heart Rate
+            |--------------------------------------------------------------------------
+            */
 
-        ->editColumn('heart_rate', function ($reading) {
+            ->editColumn('heart_rate', function ($reading) {
 
-            if ($reading->heart_rate === null) {
-                return '--';
-            }
+                if ($reading->heart_rate === null) {
+                    return '--';
+                }
 
-            return '
+                return '
                 <span class="fw-semibold">
                     ' . $reading->heart_rate . '
                 </span>
@@ -136,22 +137,22 @@ public function readingsData(
                     BPM
                 </small>
             ';
-        })
+            })
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Body Temperature
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | Body Temperature
+            |--------------------------------------------------------------------------
+            */
 
-        ->editColumn('body_temperature', function ($reading) {
+            ->editColumn('body_temperature', function ($reading) {
 
-            if ($reading->body_temperature === null) {
-                return '--';
-            }
+                if ($reading->body_temperature === null) {
+                    return '--';
+                }
 
-            return '
+                return '
                 <span class="fw-semibold">
                     ' . number_format($reading->body_temperature, 2) . '
                 </span>
@@ -160,22 +161,22 @@ public function readingsData(
                     °C
                 </small>
             ';
-        })
+            })
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Ambient Temperature
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | Ambient Temperature
+            |--------------------------------------------------------------------------
+            */
 
-        ->editColumn('ambient_temperature', function ($reading) {
+            ->editColumn('ambient_temperature', function ($reading) {
 
-            if ($reading->ambient_temperature === null) {
-                return '--';
-            }
+                if ($reading->ambient_temperature === null) {
+                    return '--';
+                }
 
-            return '
+                return '
                 <span class="fw-semibold">
                     ' . number_format($reading->ambient_temperature, 2) . '
                 </span>
@@ -184,22 +185,22 @@ public function readingsData(
                     °C
                 </small>
             ';
-        })
+            })
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Battery
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | Battery
+            |--------------------------------------------------------------------------
+            */
 
-        ->editColumn('battery_level', function ($reading) {
+            ->editColumn('battery_level', function ($reading) {
 
-            if ($reading->battery_level === null) {
-                return '--';
-            }
+                if ($reading->battery_level === null) {
+                    return '--';
+                }
 
-            return '
+                return '
                 <div class="d-flex align-items-center gap-2">
 
                     <i class="bi bi-battery-half"></i>
@@ -210,25 +211,25 @@ public function readingsData(
 
                 </div>
             ';
-        })
+            })
 
 
-        /*
-        |--------------------------------------------------------------------------
-        | Allow HTML
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | Allow HTML
+            |--------------------------------------------------------------------------
+            */
 
-        ->rawColumns([
-            'recorded_at',
-            'heart_rate',
-            'body_temperature',
-            'ambient_temperature',
-            'battery_level',
-        ])
+            ->rawColumns([
+                'recorded_at',
+                'heart_rate',
+                'body_temperature',
+                'ambient_temperature',
+                'battery_level',
+            ])
 
-        ->make(true);
-}
+            ->make(true);
+    }
 
 
 

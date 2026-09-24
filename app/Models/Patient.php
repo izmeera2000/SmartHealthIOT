@@ -4,13 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Relations\HasOne;
 class Patient extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-            'doctor_id',
+        'doctor_id',
 
         'user_id',
         'patient_id',
@@ -25,7 +25,7 @@ class Patient extends Model
         'blood_type',
         'height',
         'weight',
-                'profile_photo',
+        'profile_photo',
 
     ];
 
@@ -88,13 +88,22 @@ class Patient extends Model
     |--------------------------------------------------------------------------
     */
 
-public function devices() { return $this->hasMany(Device::class, 'patient_id', 'id'); }
+    public function devices()
+    {
+        return $this->hasMany(Device::class, 'patient_id', 'id');
+    }
 
     public function doctor()
-{
-    return $this->belongsTo(User::class, 'doctor_id');
-}
+    {
+        return $this->belongsTo(User::class, 'doctor_id');
+    }
 
+
+
+public function healthSettings(): HasOne
+{
+    return $this->hasOne(PatientHealthSetting::class);
+}
 }
 
 

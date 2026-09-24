@@ -6,7 +6,8 @@ use App\Models\Device;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-
+use App\Models\SensorReading;
+use App\Services\HealthReadingEvaluator;
 class DeviceController extends Controller
 {
     /**
@@ -595,6 +596,153 @@ class DeviceController extends Controller
                 'Device deleted successfully.',
         ]);
     }
+
+
+    /**
+     * =========================================================
+     * ESP32: STORE SENSOR READING
+     * =========================================================
+     *
+     * ESP32 sends:
+     *
+     * POST /api/device/readings
+     *
+     * {
+     *     "heart_rate": 78,
+     *     "spo2": 98,
+     *     "body_temperature": 36.7,
+     *     "ambient_temperature": 27.5,
+     *     "battery_level": 87
+     * }
+     *
+     * The device is identified through DeviceAuth middleware.
+     */
+    /**
+ * =========================================================
+ * ESP32: STORE SENSOR READING
+ * =========================================================
+ */
+public function storeReading(
+    Request $request,
+    HealthReadingEvaluator $evaluator
+) {
+    /*
+    |--------------------------------------------------------------------------
+    | Get authenticated ESP32
+    |--------------------------------------------------------------------------
+    */
+
+    $device = $request->attributes->get('device');
+
+    if (!$device) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Device authentication failed.',
+        ], 401);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validate sensor data
+    |--------------------------------------------------------------------------
+    */
+
+    $validated = $request->validate([
+
+        'heart_rate' =>
+            'nullable|integer|min:0|max:300',
+
+        'spo2' =>
+            'nullable|integer|min:0|max:100',
+
+        'body_temperature' =>
+            'nullable|numeric|min:0|max:100',
+
+        'ambient_temperature' =>
+            'nullable|numeric|min:-50|max:100',
+
+        'battery_level' =>
+            'nullable|integer|min:0|max:100',
+
+        'recorded_at' =>
+            'nullable|date',
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Create reading
+    |--------------------------------------------------------------------------
+    */
+
+    $reading = $device->readings()->create([
+
+        'heart_rate' =>
+            $validated['heart_rate'] ?? null,
+
+        'spo2' =>
+            $validated['spo2'] ?? null,
+
+        'body_temperature' =>
+            $validated['body_temperature'] ?? null,
+
+        'ambient_temperature' =>
+            $validated['ambient_temperature'] ?? null,
+
+        'battery_level' =>
+            $validated['battery_level'] ?? null,
+
+        'recorded_at' =>
+            $validated['recorded_at'] ?? now(),
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update device status
+    |--------------------------------------------------------------------------
+    */
+
+    $device->update([
+        'status' => 'active',
+        'last_seen_at' => now(),
+    ]);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Evaluate personalized patient limits
+    |--------------------------------------------------------------------------
+    */
+
+    $reading->load([
+        'device.patient.healthSettings'
+    ]);
+
+    $alerts = $evaluator->evaluate($reading);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Return response
+    |--------------------------------------------------------------------------
+    */
+
+    return response()->json([
+        'success' => true,
+
+        'message' =>
+            'Sensor reading stored successfully.',
+
+        'reading' =>
+            $reading,
+
+        'alerts' =>
+            $alerts,
+    ], 201);
+}
+
 
 
     /**
